@@ -1,0 +1,74 @@
+
+.rangeSliderMain {
+	color: #1976d2;
+	cursor: pointer;
+	display: inline-block;
+	position: relative;
+	box-sizing: content-box;
+	touch-action: none;
+	outline: none; // gray solid 1px;
+}
+
+.rangeRail {
+	color: #1976d2;
+	display: block;
+	opacity: 0.38;
+	position: absolute;
+	border-radius: 1px;
+	background-color: currentColor;
+}
+
+.rangeTrack {
+	display: block;
+	position: absolute;
+	border-radius: 1px;
+	transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+	background-color: currentColor;
+}
+
+.rangeTrack:hover {
+	box-shadow: 0px 0px 0px 3px rgba(25, 118, 210, 0.26);
+}
+
+.thumbText {
+	background-color: #1976d2;
+	color: white;
+	padding: 5px 10px;
+	border-radius: 10px;
+	z-index: 1;
+	position: absolute;
+	font-size: 0.75rem;
+	transform: scale(0);
+	transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+	font-weight: 400;
+	line-height: 1.2;
+	letter-spacing: 0.01071em;
+	transform-origin: bottom center;
+	text-align: center;
+	min-width: 2.5rem;
+}
+
+.rangeThumb {
+	display: flex;
+	outline: 0;
+	position: absolute;
+	box-sizing: border-box;
+	transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+	align-items: center;
+	border-radius: 50%;
+	justify-content: center;
+	background-color: currentColor;
+	opacity: 1.0;
+}
+
+.rangeThumb:hover {
+	box-shadow: 0px 0px 0px 8px rgba(25, 118, 210, 0.26);
+}
+
+.rangeThumb:hover .thumbText, .showThumbText {
+	transform: scale(1);
+}
+
+.rangeTrack:hover ~ .rangeThumb .thumbText {
+	transform: scale(1);
+}

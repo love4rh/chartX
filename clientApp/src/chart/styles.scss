@@ -1,0 +1,105 @@
+.chartMain {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartTopDiv {
+  flex: 1 1;
+  display: flex;
+}
+
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #D4D8DA;
+  stroke-width: 2px;
+  shape-rendering: crispEdges;
+}
+
+.axisLabel {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2px;
+  opacity: 0.8;
+}
+
+.selectedLine {
+  stroke-width: 3px;
+  opacity: 1.0;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: #F1F3F3;
+  stroke: #777;
+  stroke-width: 3px;
+}
+  
+.hover-line {
+  stroke: #777;
+  stroke-width: 2px;
+  stroke-dasharray: 3,3;
+}
+
+.tick {
+  font-size: 0.8rem;
+}
+
+.chartToolTip {
+  position: absolute;
+  background-color: whitesmoke;
+  border: solid 1px #222;
+  padding: 2px 4px;
+  border-radius: 4px;
+  min-width: 110px;
+  opacity: 0.8;
+}
+
+.tooltipItem {
+  height: 24px;
+  line-height: 24px;
+}
+
+.legendBox {
+  overflow: hidden;
+  flex-basis: 36px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.legendLine {
+  width: 36px;
+  height: 2px;
+  position: absolute;
+  border-radius: 1px;
+  background-color: currentColor;
+  display: block;
+}
+
+.legendItemBox {
+  cursor: pointer;
+  margin: 0 16px;
+}
+
+.legendCheckBox {
+  display: inline-block;
+  position: relative;
+  top: 2px;
+}
+
+.legendTitle {
+  display: inline-block;
+}
