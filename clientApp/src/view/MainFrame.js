@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
 import { isvalid, setGlobalMessageHandle } from '../util/tool.js';
 import { apiProxy } from '../util/apiProxy.js';
@@ -8,7 +9,7 @@ import { BsList } from 'react-icons/bs';
 import Spinner from 'react-bootstrap/Spinner'
 import Toast from 'react-bootstrap/Toast'
 
-import { appData } from '../app/AppData.js';
+import { AppData } from '../app/AppData.js';
 import { AppFrame } from '../view/AppFrame.js';
 
 import './MainFrame.scss';
@@ -16,8 +17,14 @@ import './MainFrame.scss';
 
 
 class MainFrame extends Component {
+  static propTypes = {
+    compCode: PropTypes.string
+  };
+
   constructor (props) {
     super(props);
+
+    const { compCode } = props;
 
     this.state = {
       pageType: 'main', // entry, main,
@@ -25,10 +32,8 @@ class MainFrame extends Component {
       waiting: false,
       menuShown: false,
       redrawCount: 0,
-      appData: appData
+      appData: new AppData({ compCode })
     };
-
-    console.log('MainFrame', props);
 
     this.handleUnload = this.handleUnload.bind(this);
   }

@@ -3,9 +3,12 @@ import './App.css';
 
 
 function App() {
+  const url = window.location.href;
+  const code = url.substring(url.lastIndexOf('/') + 1);
+
   return (
     <div className="App">
-      <MainFrame appTitle="Online Chart" />
+      <MainFrame appTitle="Chart X" compCode={code} />
     </div>
   );
 }

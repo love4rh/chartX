@@ -9,7 +9,7 @@ import lib.turbok.util.UsefulTool;
 
 
 
-public class AppTreatDB
+public class AppChartX
 {
     public static void main(String[] args)
     {
@@ -28,7 +28,7 @@ public class AppTreatDB
                   , File.separator, "conf", File.separator, "setting.yml" );
         }
         
-        System.out.println("Treat DB Sever starting...");
+        System.out.println("ChartX Sever starting...");
         
         AppMain appMain = new AppMain();
         

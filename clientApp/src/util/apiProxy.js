@@ -2,8 +2,8 @@ import axios from 'axios';
 
 import { makeid, isvalid } from '../util/tool.js';
 
-export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
-// export const _serverBaseUrl_ = 'http://127.0.0.1:8888';
+// export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
+export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
 
@@ -18,7 +18,6 @@ const GET = axios.create({
   timeout: 12000,
   headers: basicHeader
 });
-
 
 
 const apiProxy = {
@@ -52,50 +51,24 @@ const apiProxy = {
 			});
 	},
 
-  signIn: (userID, password, cbSuccess, cbError) => {
-    apiProxy.enterWaiting();
-		
-		axios({
-			baseURL: _serverBaseUrl_,
-			url: '/checkAuthority',
-			method: 'post',
-			timeout: 4000,
-			headers: basicHeader,
-			data: { userID, password }
-		})
-		.then(res => {
-			apiProxy.leaveWaiting();
-      const data = res.data;
-      // console.log('signIn', res);
+	getCompData: (compCode, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
 
-			if( isvalid(data) && data.returnCode === 0 ) {
-        basicHeader['x-auth-code'] = data.response.authCode;
-				if( cbSuccess ) cbSuccess(data);
-			} else if( cbError ) {
-			  cbError(res);
-      }
-		})
-		.catch(res => {
+		axios.get(`${_serverBaseUrl_}/gtx?pCode=${compCode}`, {
+			headers: {
+				'Content-Type': 'application/json;charset=utf-8',
+				'x-user-token': _userToken,
+				'x-auth-code': `auth code here`
+			}
+		}).then(res => {
 			apiProxy.leaveWaiting();
-			if( cbError ) cbError(res);
+			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			// console.log('apiProxy ERR', err);
+			if( cbErr ) { cbErr(err); }
 		});
-  },
-
-  signOut: () => {
-    axios({
-			baseURL: _serverBaseUrl_,
-			url: '/signOut',
-			method: 'post',
-			timeout: 4000,
-			headers: basicHeader
-		})
-		.then(res => {
-			console.log('signed out');
-		})
-		.catch(res => {
-			console.log('signed out');
-		});
-  },
+	},
 
 	getMetaData: (cbSuccess, cbError) => {
 		apiProxy.enterWaiting();
@@ -172,4 +145,4 @@ const apiProxy = {
 };
 
 export default apiProxy;
-export {apiProxy};
+export { apiProxy };

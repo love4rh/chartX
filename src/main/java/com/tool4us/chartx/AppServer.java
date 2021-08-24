@@ -80,9 +80,26 @@ public class AppServer implements IStaticFileMap
         }
         
         if( vDir != null )
+        {
             uriPath = uriPath.substring(sPos);
+        }
         else
+        {
             vDir = OPT.virtualRoot();
+
+            String pCode = uriPath.substring(1);
+            if( pCode != null && pCode.length() == 6 )
+            {
+                boolean allDigit = true;
+                for(int i = 0; allDigit && i < pCode.length(); ++i)
+                {
+                    allDigit = Character.isDigit(pCode.charAt(i));
+                }
+                
+                if( allDigit )
+                    uriPath = "/" + getRootFile();
+            }
+        }
         
         return new File(vDir + uriPath);
     }

@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.json.JSONObject;
-
 import com.tool4us.common.AppOptions;
 
 import lib.turbok.util.UsefulTool;
@@ -52,8 +50,6 @@ public enum AppSetting
     
     private Map<String, String>     _param = new TreeMap<String, String>();
 
-    private Map<String, String>		_accountMap = new TreeMap<String, String>();
-
     
     private AppSetting()
     {
@@ -75,7 +71,7 @@ public enum AppSetting
     
     private void load() throws Exception
     {
-        String[] pathName = new String[] { "folder/temporary", "folder/vroot" };
+        String[] pathName = new String[] { "folder/temporary", "folder/vroot", "folder/data" };
 
         for(String key : pathName)
         {
@@ -94,8 +90,10 @@ public enum AppSetting
 
         _serverID = _options.getAsString("setting/id");
         _port = _options.getAsInteger("network/port", 8080);
+        
         _bossThreadNum = _options.getAsInteger("network/bossThread", 1);
         _serviceThreadNum = _options.getAsInteger("/network/workerThread", 4);
+        
         _withConsole = _options.getAsBoolean("setting/withConsole", false);
         _fileLogging = _options.getAsBoolean("logging/useFile", true);
 
@@ -103,16 +101,6 @@ public enum AppSetting
 
         if( _temporaryFolder == null )
             _temporaryFolder = UsefulTool.GetModulePath() + File.separator + "temporary";
-
-        JSONObject accountObj = _options.getAsObject("account");
-        
-        if( accountObj != null )
-        {
-        	for(String account: accountObj.keySet())
-        	{
-        		_accountMap.put(account, accountObj.get(account).toString());
-        	}
-        }
     }
     
     public int port()
@@ -155,9 +143,9 @@ public enum AppSetting
         return _fileLogging;
     }
     
-    public String resultFolder()
+    public String dataFolder()
     {
-        return this.parameter("folder", "result");
+        return this.parameter("folder", "data");
     }
     
     public String virtualRoot()
@@ -174,14 +162,4 @@ public enum AppSetting
     {
         return this._keepOld;
     }
-   
-	public boolean isValidAccount(String account, String password)
-	{
-		String comp = _accountMap.get(account);
-
-		if( comp == null )
-			return false;
-		
-		return comp.equals(password);
-	}
 }

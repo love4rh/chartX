@@ -3,6 +3,14 @@
 
 .appFrame {
   height: $bodyHeight;
+  background-color: $chartBGColor;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.appFrame2 {
+  height: $bodyHeight;
   width: 100%;
   display: flex;
   flex-direction: column;

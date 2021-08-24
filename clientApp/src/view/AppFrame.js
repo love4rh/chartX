@@ -1,19 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { LayoutDivider, DividerDirection } from '../component/LayoutDivider.js';
-
 import { convertToChartData } from '../chart/chartTool.js';
 import { RunTooltipChart } from '../chart/RunTooltipChart.js';
-// import { LineTooltipChart } from '../chart/LineTooltipChart.js';
 
 import { makeid } from '../grid/common.js';
 
-import DataGrid from '../grid/DataGrid.js';
 import BasicDataSource from '../grid/BasicDataSource.js';
-
-import ConsoleView from '../view/ConsoleView.js';
-import DummyView from '../view/DummyView.js';
 
 import './AppFrame.scss';
 
@@ -36,9 +29,6 @@ class AppFrame extends Component {
       drawKey: makeid(8),
       clientWidth: 800,
       clientHeight: 400,
-      bottomHeight: 150,
-      leftWidth: 300,
-      controlPaneHeight: 300,
       ds
     };
 
@@ -46,7 +36,10 @@ class AppFrame extends Component {
   }
 
   componentDidMount() {
+    const { appData } = this.props;
+
     this.onResize();
+    appData.addEventListener(this.handleDataEvent);
     window.addEventListener('resize', this.onResize);
   }
 
@@ -62,9 +55,17 @@ class AppFrame extends Component {
   }
 
   // DataSource에 변경이 있을 경우 발생하는 이벤트 처리
-  handleDataEvent = (ev) => {
-    console.log('DATA CHANGED EVENT OCCURED');
-    this.setState({ drawKey: makeid(8) });
+  handleDataEvent = (sender, evt) => {
+    const { appData } = this.props;
+
+    if( sender === 'appData' ) {
+      this.setState({
+        drawKey: makeid(8),
+        ds: new BasicDataSource(appData.getLatestData())
+      });
+    } else {
+      this.setState({ drawKey: makeid(8) });
+    }
   }
 
   handleLayoutChanged = (type) => (from, to) => {
@@ -82,56 +83,25 @@ class AppFrame extends Component {
   }
 
   render() {
-    const dividerSize = 4;
-    const { drawKey, clientWidth, clientHeight, bottomHeight, leftWidth, controlPaneHeight, ds } = this.state;
+    const { appData } = this.props;
+    const { drawKey, clientWidth, clientHeight, ds } = this.state;
 
-    const mainWidth = clientWidth - leftWidth - dividerSize;
-    const mainHeight = clientHeight - bottomHeight - dividerSize;
+    const mainWidth = clientWidth; // - leftWidth - dividerSize;
+    const mainHeight = clientHeight - 54; // - bottomHeight; // - dividerSize;
 
-    const dataPaneHeight = mainHeight - controlPaneHeight - dividerSize;
+    const { X, Y1, Y2 } = appData.getLatestChart();
 
-    const chartData = convertToChartData({ ds, time: 0, y1: [1, 2], y2: [3, 4, 5] });
+    const chartData = convertToChartData({ ds, time: X, y1: Y1, y2: Y2 });
 
     return (
       <div ref={this._mainDiv} className="appFrame">
-        <div className="topPane">
-          <div className="leftPane" style={{ flexBasis:`${leftWidth}px` }}>
-            <div className="leftTopPane" style={{ flexBasis:`${dataPaneHeight}px` }}>
-              <DataGrid
-                width={leftWidth}
-                height={dataPaneHeight}
-                dataSource={ds}
-                userBeginRow={0}
-                editable={true}
-              />
-            </div>
-            <LayoutDivider direction={DividerDirection.horizontal}
-              size={dividerSize}
-              onLayoutChange={this.handleLayoutChanged('leftTopBottom')}
-            />
-            <div className="leftBottomPane" style={{ flexBasis:`${controlPaneHeight}px` }}>
-              <DummyView title="Left Bottom Pane" width={leftWidth} height={controlPaneHeight} />
-            </div>
-          </div>
-          <LayoutDivider direction={DividerDirection.vertical}
-            size={dividerSize}
-            onLayoutChange={this.handleLayoutChanged('leftRight')}
+        <div key={`chart-${drawKey}`} style={{ flexBasis:`${mainWidth}px` }}>
+          <RunTooltipChart
+            data={chartData}
+            showingRangeX={[0, Math.min(300, ds.getRowCount())]}
+            withLegend={true} withSlider={true} withYSlider={false}
+            width={mainWidth} height={mainHeight}
           />
-          <div key={`chart-${drawKey}`} className="rightPane" style={{ flexBasis:`${mainWidth}px` }}>
-            <RunTooltipChart
-              data={chartData}
-              showingRangeX={[0, 300]}
-              withLegend={true} withSlider={true} withYSlider={false}
-              width={mainWidth} height={mainHeight}
-            />
-          </div>
-        </div>
-        <LayoutDivider direction={DividerDirection.horizontal}
-          size={dividerSize}
-          onLayoutChange={this.handleLayoutChanged('topBottom')}
-        />
-        <div className="bottomPane" style={{ flexBasis:`${bottomHeight}px` }}>
-          <ConsoleView width={clientWidth} height={bottomHeight} />
         </div>
       </div>
     );

@@ -79,7 +79,7 @@ class RunTooltipChart extends Component {
 
     this.hideTimeOut = null;
 
-    // console.log('RunChart construct', this.state);
+    console.log('RunChart construct', this.state);
   }
   
   componentDidMount() {
@@ -461,7 +461,6 @@ class RunTooltipChart extends Component {
                     { dd.shown ? <RiCheckboxLine size="18" /> : <RiCheckboxBlankLine size="18" /> }
                   </div>
                   <div className="legendTitle">
-                    <span className="legendLine" />
                     { dd.title }
                   </div>
                 </div>

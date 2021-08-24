@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.tool4us.common.Logs;
-import com.tool4us.treatdb.tool.UserSession;
 
 import lib.turbok.task.ITask;
 import lib.turbok.task.ITaskMonitor;
@@ -72,11 +71,7 @@ public enum JobQueue implements ITaskMonitor
     @Override
     public void OnEndTask(ITask task)
     {
-        if( task instanceof DBTask )
-        {
-            String key = ((DBTask) task).getKey();
-            _working.remove(key);
-        }
+        // TODO
     }
 
     @Override
@@ -92,19 +87,4 @@ public enum JobQueue implements ITaskMonitor
             Logs.trace(xe);
         }
     }
-
-	public DBTask pushFetchingJob(UserSession user, String qid
-		, String query, String driver, String server, String account, String password)
-	{
-		if( _working.containsKey(qid) )
-			return null;
-
-		_working.put(qid, 1);
-		
-		DBTask task = new DBTask(user, qid, query, driver, server, account, password);
-		
-		_taskMgr.pushTask(task);
-		
-		return task;
-	}
 }
