@@ -11,10 +11,10 @@ class AppData {
     const { compCode } = props;
 
     this._handler = [];
-    this._data = {};
+    this._dataList = [];
     this._chart = {};
 
-    if( isvalid(compCode) ) {
+    if( isvalid(compCode) && compCode !== '' ) {
       this.setCompCode(compCode);
     }
   }
@@ -44,27 +44,26 @@ class AppData {
 
     // const { columns } = sample;
 
-    this._data = {
+    this._dataList = [{
       title: 'sample',
       columns: columns,
       editable: true
-    };
+    }];
 
     this._chart = { X: 0, Y1: [1, 2], Y2: [3, 4, 5] };
 
-    return this._data;
+    return this._dataList[0];
   }
 
   setCompCode = (code) => {
     this.compCode = code;
 
-    apiProxy.getCompData(code,
+    apiProxy.getYearlyData(code,
       (res) => {
         // console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
-          this._data = res.response.data;
+          this._dataList = res.response.data;
           this._chart = res.response.chart;
-
           this.pulseEvent('data changed');
         }
       },
@@ -85,12 +84,17 @@ class AppData {
     }
   }
 
-  getLatestData = () => {
-    return this._data;
+  getDataList = () => {
+    return this._dataList;
   }
 
-  getLatestChart = () => {
+  getChartOption = () => {
     return this._chart;
+  }
+
+  getMarkerList = (idx) => {
+    const dd = this._dataList[idx];
+    return dd && dd.marker;
   }
 
 };

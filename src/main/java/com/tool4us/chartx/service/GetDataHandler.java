@@ -49,7 +49,7 @@ public class GetDataHandler extends ApiHandler
         sb.append("\"chart\":{ \"X\": 0, \"Y1\":[1, 2], \"Y2\":[3, 4, 5] }");
         
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
-        sb.append(", \"data\":{");
+        sb.append(", \"data\":[{");
         
         sb.append("\"title\":\"").append(pCode).append("\"");
         sb.append(",\"columns\":[");
@@ -88,7 +88,7 @@ public class GetDataHandler extends ApiHandler
         
         sb.append("]");
         sb.append(",\"editable\":false");
-        sb.append("}");
+        sb.append("}]");
         
         sb.append("}");
         

@@ -1,5 +1,9 @@
+@import "../view/theme.scss";
+
+
 .chartMain {
   overflow: hidden;
+  background-color: $chartBGColor;
   display: flex;
   flex-direction: column;
 }

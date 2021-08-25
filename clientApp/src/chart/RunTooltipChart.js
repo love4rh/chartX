@@ -15,12 +15,6 @@ import './styles.scss';
 
 /**
  * Run Chart
- * props: {
- *   width, height,
- *   base: 시간을 대변하는 데이터.
- *   series: [{ title, axis:(left|right), data:[], color }, .. ]
- *   ]
- * }
  * 참고: https://github.com/adamjanes/udemy-d3/blob/master/06/6.10.0/js/main.js
  */ 
 class RunTooltipChart extends Component {
@@ -33,12 +27,13 @@ class RunTooltipChart extends Component {
     withSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (가로축)
     withYSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (세로축)
     withLegend: PropTypes.bool, // 범례 표시 여부
+    markerData: PropTypes.array, // Marker 데이터. X 축 인덱스. Y는 첫 번째 시리즈의 값을 이용함
   }
 
   constructor(props) {
     super(props);
 
-    const { width, height, data, showingRangeX, withLegend } = this.props;
+    const { width, height, data, showingRangeX, withLegend, markerData } = this.props;
 
     const withSlider = istrue(this.props.withSlider);
     const withYSlider = istrue(this.props.withYSlider);
@@ -67,19 +62,19 @@ class RunTooltipChart extends Component {
       chartDiv: React.createRef(),
       data: { dataSize, xData, dateTimeAxis, extentX, yData, extentY1:extentY[0], extentY2:extentY[1] },
       useY2,
-      margin: { LEFT: 70, RIGHT: 70, TOP: 50, BOTTOM: 70 },
+      margin: { LEFT: 70, RIGHT: 70, TOP: 20, BOTTOM: 70 },
       canvasWidth: width - (withYSlider ? (sliderSize + (useY2 ? sliderSize : 0)) : 0),
-      canvasHeight: height - (withSlider ? sliderSize : 0),
+      canvasHeight: height - (withSlider ? sliderSize : 0) - (withLegend ? 36 : 0),
       chartElement: {},
       withSlider,
       withYSlider,
       withLegend,
-      userXExtent: showingRangeX
+      userXExtent: showingRangeX,
+      markerData
     };
 
     this.hideTimeOut = null;
-
-    console.log('RunChart construct', this.state);
+    // console.log('RunChart construct', this.state);
   }
   
   componentDidMount() {
@@ -97,12 +92,13 @@ class RunTooltipChart extends Component {
     if( nextProps.width !== prevState.canvasWidth || nextProps.height !== prevState.canvasHeight ) {
       const withSlider = istrue(nextProps.withSlider);
       const withYSlider = istrue(nextProps.withYSlider);
+      const withLegend = istrue(nextProps.withLegend);
       const hasY2 = nextProps.data.yData.length > 1;
 
       return {
         withSlider, withYSlider,
         canvasWidth: nextProps.width - (withYSlider ? (sliderSize + (hasY2 ? sliderSize : 0)) : 0),
-        canvasHeight: nextProps.height - (withSlider ? sliderSize : 0)
+        canvasHeight: nextProps.height - (withSlider ? sliderSize : 0) - (withLegend ? 36 : 0)
       };
     }
 
@@ -126,6 +122,7 @@ class RunTooltipChart extends Component {
   }
 
   initializeD3Area = (canvasWidth, canvasHeight) => {
+    // const { title } = this.props;
     const { compID, chartDiv, margin, data, useY2 } = this.state;
 
     const { dateTimeAxis } = data;
@@ -171,13 +168,13 @@ class RunTooltipChart extends Component {
     const tmpObj = {};
 
     tmpObj['label'] = g.append('text')
-      .attr('class', 'y axisLabel')
+      .attr('class', 'y axisLabel') // 
       .attr('y', -60)
       .attr('x', - (HEIGHT - 70) / 2)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
-      .text('Y1');
+      .text('Y2');
 
     tmpObj['scale'] = d3.scaleLinear().range([HEIGHT, 0]);
     tmpObj['axis'] = g.append('g').attr('class', 'y axis');
@@ -208,7 +205,12 @@ class RunTooltipChart extends Component {
   }
 
   updateD3Chart = () => {
-    const { chartDiv, compID, margin, data, chartElement, canvasWidth, canvasHeight, userXExtent, userY1Extent, userY2Extent } = this.state;
+    const {
+      chartDiv, canvasWidth, canvasHeight,
+      compID, margin, data, chartElement,
+      userXExtent, userY1Extent, userY2Extent, markerData
+    } = this.state;
+
     const { bisectDate, axisX, axesY } = chartElement;
 
     // xData가 null이면 data index임. xData가 null이 아니고 dateTimeAxis가 false이면 label임.
@@ -251,6 +253,7 @@ class RunTooltipChart extends Component {
     });
 
     const g = this._g;
+
     const xScaler = axisX['scale'];
 
     // Overlay for handling mouse event
@@ -375,9 +378,47 @@ class RunTooltipChart extends Component {
       return true;
     });
 
-    // Axis Label
-    axisX['label'].text('index');
-    axesY[0]['label'].text('values');
+    // 시점 마커 추가
+    const markerID = compID + '_marker';
+
+    d3.select('.' + markerID).remove();
+
+    if( isvalid(markerData) && markerData.length > 0 ) {
+      const mg = g.append('g')
+        .attr('clip-path', `url(#${clipBoxID})`)
+        .classed(markerID, true)
+      ;
+
+      const y1Scale = axesY[0]['scale'];
+      const y1Data = yData[0].data;
+
+      markerData.map(idx => {
+        mg.append('circle')
+          .on('mouseover', (ev) => {
+            if( isvalid(this.hideTimeOut) ) {
+              clearTimeout(this.hideTimeOut);
+            }
+            cbShowToolTip(ev);
+          })
+          .attr('cx', xScaler(idx + 1))
+          .attr('cy', y1Scale(y1Data[idx]))
+          .attr('r', 4)
+          .attr('fill', 'red')
+          .attr('stroke', 'black')
+          .attr('stroke-width', '1')
+        ;
+        return true;
+      });
+    } // end of marker-if
+  }
+
+  handleMouseOut = () => {
+    const { compID } = this.state;
+
+    const focusDivID = compID + '_focus';
+    const tooltipDivID = compID + '_tooltip';
+
+    [focusDivID, tooltipDivID].map(k => d3.select('.' + k).style('display', 'none') );
   }
 
   handleSliderEvent = (axisType) => (type, param) => {
@@ -431,7 +472,7 @@ class RunTooltipChart extends Component {
               />
             </div>
           }
-          <div ref={chartDiv} />
+          <div ref={chartDiv} onMouseOut={this.handleMouseOut} />
           { hasY2 && withYSlider &&
             <div style={{
               'width': `${sliderSize}px`,
@@ -449,7 +490,7 @@ class RunTooltipChart extends Component {
           }
         </div>
         { withLegend &&
-          <div className="legendBox">
+          <div className="legendBox" style={{ width:`${width}px` }}>
             { yData.map((dd, idx) => {
               return (
                 <div key={`legend-item-${idx}`}

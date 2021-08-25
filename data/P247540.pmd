@@ -4,15 +4,15 @@
 <tabularData type="FileMapStore" version="1.0">
 	<dataInfo>
 		<blockLimit>-1</blockLimit>
-		<totalRowNum>2375</totalRowNum>
-		<stringLastPos>28504</stringLastPos>
-		<dataFile><![CDATA[./P066570R.pmd.data]]></dataFile>
-		<stringFile><![CDATA[./P066570R.pmd.string]]></stringFile>
+		<totalRowNum>615</totalRowNum>
+		<stringLastPos>7384</stringLastPos>
+		<dataFile><![CDATA[./P247540.pmd.data]]></dataFile>
+		<stringFile><![CDATA[./P247540.pmd.string]]></stringFile>
 	</dataInfo>
 
 	<columns>
 		<column name="DATE" type="string" />
-		<column name="RPRICE" type="real" />
+		<column name="PRICE" type="real" />
 		<column name="MV3" type="real" />
 		<column name="SLOPE" type="real" />
 		<column name="CUMULATED" type="real" />

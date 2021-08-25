@@ -51,6 +51,25 @@ const apiProxy = {
 			});
 	},
 
+	getYearlyData: (compCode, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios.get(`${_serverBaseUrl_}/ytx?pCode=${compCode}`, {
+			headers: {
+				'Content-Type': 'application/json;charset=utf-8',
+				'x-user-token': _userToken,
+				'x-auth-code': `auth code here`
+			}
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			// console.log('apiProxy ERR', err);
+			if( cbErr ) { cbErr(err); }
+		});
+	},
+
 	getCompData: (compCode, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 

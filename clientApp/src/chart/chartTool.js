@@ -85,7 +85,8 @@ export const getSeriesColor = (idx) => {
       }
       return { data, title, color };
     }) );
-    extentY.push(tmpE);
+    const mgr = (tmpE[1] - tmpE[0]) * 0.1;
+    extentY.push([tmpE[0] - mgr, tmpE[1] + mgr]);
     return true;
   });
   

@@ -6,7 +6,10 @@
   background-color: $chartBGColor;
   width: 100%;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start; // center
+  overflow-y: auto;
 }
 
 .appFrame2 {
