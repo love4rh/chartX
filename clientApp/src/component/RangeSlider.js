@@ -24,12 +24,13 @@ class RangeSlider extends Component {
     labelData: PropTypes.array, // Label 데이터 여부
     dateTime: PropTypes.bool, // 날짜 (Date 객체) 여부 반환
     tipTextPos: PropTypes.string, // Tip Text 표시 위치. top, bottom, left, right. 기본값 top
+    alwaysShow: PropTypes.bool, // Tooltip 항상 표시 여부
   };
 
   constructor (props) {
     super(props);
 
-    const { valueRange, selectedRange, vertical, labelData, dateTime, tipTextPos } = props;
+    const { valueRange, selectedRange, vertical, labelData, dateTime, tipTextPos, alwaysShow } = props;
 
     const range = istrue(dateTime) ? valueRange.map(d => d.getTime()) : valueRange;
 
@@ -40,7 +41,8 @@ class RangeSlider extends Component {
       mouseState: null,
       labelData,
       dateTime: istrue(dateTime),
-      tipTextPos: nvl(tipTextPos, 'top')
+      tipTextPos: nvl(tipTextPos, 'top'),
+      alwaysShow: istrue(alwaysShow)
     };
 
     this._mainDiv = React.createRef();
@@ -212,7 +214,7 @@ class RangeSlider extends Component {
   }
 
   render () {
-    const { vertical, range, selectedRange, mouseState, labelData, dateTime, tipTextPos } = this.state;
+    const { vertical, range, selectedRange, mouseState, labelData, dateTime, tipTextPos, alwaysShow } = this.state;
 
     const thumbId = ['left', 'right'];
 
@@ -286,7 +288,7 @@ class RangeSlider extends Component {
               onMouseDown={this.handleMouseDown(id)}
             >
               <span
-                className={['thumbText', (actType === id || actType === 'track' ? 'showThumbText' : '')].join(' ')}
+                className={['thumbText', (alwaysShow || actType === id || actType === 'track' ? 'showThumbText' : '')].join(' ')}
                 style={textPos}
               >
                 {valueText[idx]}

@@ -4,8 +4,8 @@
 <tabularData type="FileMapStore" version="1.0">
 	<dataInfo>
 		<blockLimit>-1</blockLimit>
-		<totalRowNum>2376</totalRowNum>
-		<stringLastPos>28516</stringLastPos>
+		<totalRowNum>2215</totalRowNum>
+		<stringLastPos>26584</stringLastPos>
 		<dataFile><![CDATA[./P066570.pmd.data]]></dataFile>
 		<stringFile><![CDATA[./P066570.pmd.string]]></stringFile>
 	</dataInfo>
@@ -17,7 +17,7 @@
 		<column name="SLOPE" type="real" />
 		<column name="CUMULATED" type="real" />
 		<column name="VAR_CUM" type="real" />
-		<column name="CONT_SLP" type="real" />
+		<column name="GAP_MAX" type="real" />
 		<column name="BPOS_FLAG" type="real" />
 	</columns>
 </tabularData>

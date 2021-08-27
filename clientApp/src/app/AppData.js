@@ -1,5 +1,6 @@
 // eslint-disable-next-line
-import { isvalid, tickCount, randomReal, randomInteger } from '../util/tool.js';
+import { isvalid, istrue, tickCount, randomReal, randomInteger } from '../util/tool.js';
+import { cp } from '../grid/common.js';
 
 import { apiProxy } from '../util/apiProxy.js';
 
@@ -13,6 +14,10 @@ class AppData {
     this._handler = [];
     this._dataList = [];
     this._chart = {};
+
+    this._useCommonRange = false;
+    this._userExtentY = [null, null];
+    this._dataExtentY = [[0, 100], [0, 100]];
 
     if( isvalid(compCode) && compCode !== '' ) {
       this.setCompCode(compCode);
@@ -60,10 +65,15 @@ class AppData {
 
     apiProxy.getYearlyData(code,
       (res) => {
-        // console.log('APPDATA OK', res);
+        console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
-          this._dataList = res.response.data;
-          this._chart = res.response.chart;
+          const { data, chart, extentY1, extentY2 } = res.response;
+
+          this._dataList = data;
+          this._chart = chart;
+          this._dataExtentY = [ extentY1, extentY2 ];
+          this._userExtentY = cp([ extentY1, extentY2 ]);
+
           this.pulseEvent('data changed');
         }
       },
@@ -74,6 +84,8 @@ class AppData {
     );
   }
 
+  // handle looks like function(sender, event).
+  // sender will be 'appData'
   addEventListener = (handler) => {
     this._handler.push(handler);
   }
@@ -84,8 +96,37 @@ class AppData {
     }
   }
 
+  setUserExtentY = (y1, y2) => {
+    if( y1 ) {
+      this._userExtentY[0] = y1;
+    }
+
+    if( y2 ) {
+      this._userExtentY[1] = y2;
+    }
+
+    this.pulseEvent('extent changed');
+  }
+
+  setCommonRangeUsage = (flag) => {
+    this._useCommonRange = flag;
+    this.pulseEvent('extent changed');
+  }
+
   getDataList = () => {
     return this._dataList;
+  }
+
+  getDataExtentY = (idx) => {
+    return this._dataExtentY[idx];
+  }
+
+  getUserExtentY = (idx) => {
+    return this._userExtentY[idx];
+  }
+
+  getExtentY = (idx) => {
+    return istrue(this._useCommonRange) ? this.getUserExtentY(idx) : null;
   }
 
   getChartOption = () => {
@@ -97,6 +138,9 @@ class AppData {
     return dd && dd.marker;
   }
 
+  isUseCommonRange = () => {
+    return this._useCommonRange;
+  }
 };
 
 export default AppData;

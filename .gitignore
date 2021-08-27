@@ -66,3 +66,4 @@ mock*.txt
 yarn.lock
 setting.yml
 
+data/

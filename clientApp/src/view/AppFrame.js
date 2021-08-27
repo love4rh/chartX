@@ -56,9 +56,7 @@ class AppFrame extends Component {
 
     if( sender === 'appData' ) {
       const sl = appData.getDataList();
-      const dl = sl.map(d => new BasicDataSource(d));
-
-      this.setState({ drawKey: makeid(8), dataList: dl });
+      this.setState({ drawKey: makeid(8), dataList: sl.map(d => new BasicDataSource(d)) });
     } else {
       this.setState({ drawKey: makeid(8) });
     }
@@ -94,6 +92,8 @@ class AppFrame extends Component {
                 <RunTooltipChart
                   title={ds.title}
                   data={chartData}
+                  showingRangeY1={appData.getExtentY(0)}
+                  showingRangeY2={appData.getExtentY(1)}
                   withLegend={true} withSlider={false} withYSlider={false}
                   width={chartWidth} height={chartHeight}
                   markerData={appData.getMarkerList(i)}

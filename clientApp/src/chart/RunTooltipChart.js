@@ -24,6 +24,8 @@ class RunTooltipChart extends Component {
     title: PropTypes.string, // 차트 제목
     data: PropTypes.object.isRequired, // 차팅 데이터. convertToChartData 참고
     showingRangeX: PropTypes.array, // X축 표시 범위. 없으면 전체
+    showingRangeY1: PropTypes.array, // Left축 표시 범위. 없으면 전체
+    showingRangeY2: PropTypes.array, // Right축 표시 범위. 없으면 전체
     withSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (가로축)
     withYSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (세로축)
     withLegend: PropTypes.bool, // 범례 표시 여부
@@ -33,7 +35,7 @@ class RunTooltipChart extends Component {
   constructor(props) {
     super(props);
 
-    const { width, height, data, showingRangeX, withLegend, markerData } = this.props;
+    const { width, height, data, showingRangeX, showingRangeY1, showingRangeY2, withLegend, markerData } = this.props;
 
     const withSlider = istrue(this.props.withSlider);
     const withYSlider = istrue(this.props.withYSlider);
@@ -45,7 +47,7 @@ class RunTooltipChart extends Component {
     // dateTimeAxis: X출 시간축 여부, extentX: X축 범위, extentY: Y축 범위 목록
     // }
 
-    const { dataSize, xData, dateTimeAxis, extentX, extentY } = data;
+    const { dataSize, xData, dateTimeAxis, extentX, extentY, xLabel } = data;
     const yData = [];
     data.yData.map((dl, idx) => {
       dl.map(dd => {
@@ -60,7 +62,7 @@ class RunTooltipChart extends Component {
     this.state = {
       compID: 'tk' + makeid(8),
       chartDiv: React.createRef(),
-      data: { dataSize, xData, dateTimeAxis, extentX, yData, extentY1:extentY[0], extentY2:extentY[1] },
+      data: { dataSize, xLabel, xData, dateTimeAxis, extentX, yData, extentY1:extentY[0], extentY2:extentY[1] },
       useY2,
       margin: { LEFT: 70, RIGHT: 70, TOP: 20, BOTTOM: 70 },
       canvasWidth: width - (withYSlider ? (sliderSize + (useY2 ? sliderSize : 0)) : 0),
@@ -70,6 +72,8 @@ class RunTooltipChart extends Component {
       withYSlider,
       withLegend,
       userXExtent: showingRangeX,
+      userY1Extent: showingRangeY1,
+      userY2Extent: showingRangeY2,
       markerData
     };
 
@@ -125,7 +129,7 @@ class RunTooltipChart extends Component {
     // const { title } = this.props;
     const { compID, chartDiv, margin, data, useY2 } = this.state;
 
-    const { dateTimeAxis } = data;
+    const { dateTimeAxis, xLabel } = data;
 
     const WIDTH = canvasWidth - margin.LEFT - margin.RIGHT;
     const HEIGHT = canvasHeight - margin.TOP - margin.BOTTOM;
@@ -157,7 +161,7 @@ class RunTooltipChart extends Component {
       .attr('x', WIDTH / 2)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
-      .text('Time');
+      .text(xLabel);
 
     axisX['scale'] = dateTimeAxis ? d3.scaleTime().range([0, WIDTH]) : d3.scaleLinear().range([0, WIDTH]);
     axisX['axis'] = g.append('g').attr('class', 'x axis').attr('transform', `translate(0, ${HEIGHT})`);
@@ -214,7 +218,7 @@ class RunTooltipChart extends Component {
     const { bisectDate, axisX, axesY } = chartElement;
 
     // xData가 null이면 data index임. xData가 null이 아니고 dateTimeAxis가 false이면 label임.
-    const { dateTimeAxis, dataSize, xData, extentX, yData, extentY1, extentY2 } = data;
+    const { dateTimeAxis, dataSize, xLabel, xData, extentX, yData, extentY1, extentY2 } = data;
 
     const WIDTH = canvasWidth - margin.LEFT - margin.RIGHT;
     const HEIGHT = canvasHeight - margin.TOP - margin.BOTTOM;
@@ -305,7 +309,7 @@ class RunTooltipChart extends Component {
 
       tooltipBox.append('div')
         .classed('tooltipItem', true)
-        .text(`X: ${xData ? xData[dataIdx] : dataIdx}`); // TODO DateTime 처리
+        .text(`${xLabel}: ${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1})`); // TODO DateTime 처리
 
       yData.map(dd => {
         tooltipBox.append('div')

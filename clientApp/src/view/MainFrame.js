@@ -11,6 +11,7 @@ import Toast from 'react-bootstrap/Toast'
 
 import { AppData } from '../app/AppData.js';
 import { AppFrame } from '../view/AppFrame.js';
+import { OptionPanel } from '../view/OptionPanel.js';
 
 import './MainFrame.scss';
 
@@ -96,6 +97,8 @@ class MainFrame extends Component {
     const { waiting, pageType, message, menuShown, appData } = this.state;
     const toastOn = isvalid(message);
 
+    const optionWidth = 300;
+
     return (
       <div className="mainWrap">
         <div className="mainHeader">
@@ -124,6 +127,13 @@ class MainFrame extends Component {
         { menuShown &&
           <div className="overlayLayer" onClick={this.handleClickMenu('close')}>&nbsp;</div>
         }
+        { /* option panel */ }
+        <div
+          className="sideMenuWrap"
+          style={{ width:`${optionWidth}px`, left:`${menuShown ? 0 : - optionWidth - 10}px` }}
+        >
+          <OptionPanel appData={appData} />
+        </div>
       </div>
     );
   }

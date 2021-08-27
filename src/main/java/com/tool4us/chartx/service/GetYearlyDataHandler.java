@@ -1,8 +1,11 @@
 package com.tool4us.chartx.service;
 
 import static com.tool4us.chartx.AppSetting.OPT;
+import static com.tool4us.common.Util.UT;
 
 import java.io.File;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.tool4us.net.http.TomyRequestor;
 import com.tool4us.net.http.TomyResponse;
@@ -20,6 +23,28 @@ import com.tool4us.net.http.TomyApi;
 public class GetYearlyDataHandler extends ApiHandler
 {
     static String[] years = new String[] { "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021" };
+    
+    static int _xColumn     = 0;
+    static int[][] _yList   = { { 1, 2 }, { 3, 4, 5, 6 } };
+
+    static int _buyPosIdx   = 7; // 구매 가능성 컬럼
+    
+    static int[] _fetchColumns = null;
+    
+    static
+    {
+        _fetchColumns = new int[ _yList[0].length + _yList[1].length + 1 ];
+        
+        _fetchColumns[0] = _xColumn;
+        
+        int idx = 1;
+        for(int i = 0; i < _yList.length; ++i)
+            for(int j = 0; j < _yList[i].length; ++j)
+            {
+                _fetchColumns[idx] = _yList[i][j];
+                idx += 1;
+            }
+    }
 
     
     @Override
@@ -47,17 +72,21 @@ public class GetYearlyDataHandler extends ApiHandler
         StringBuilder sb = new StringBuilder();
         
         sb.append("{");
-        
-        // chart --> X: 0, Y1:[1, 2], Y2:[3, 4, 5]
-        sb.append("\"chart\":{ \"X\": 0, \"Y1\":[1, 2], \"Y2\":[3, 4, 5, 6] }");
-        
+
+        sb.append("\"chart\":{ \"X\": ").append(_xColumn)
+            .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]")
+            .append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]")
+            .append("}");
+
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
         sb.append(", \"data\":[");
+        
+        Map<Integer, double[]> extentMap = new TreeMap<Integer, double[]>();
         
         boolean assigned = false;
         for(int i = 0; i < years.length; ++i)
         {
-            String dataBlock = this.makeDataBlock(years[i], ds, 0);
+            String dataBlock = this.makeDataBlock(years[i], ds, _xColumn, extentMap);
 
             if( dataBlock != null )
             {
@@ -70,6 +99,37 @@ public class GetYearlyDataHandler extends ApiHandler
         }
         sb.append("]");
         
+        // Extent Value
+        if( !extentMap.isEmpty() )
+        {
+            for(int j = 1; j <= 2; ++j)
+            {
+                int[] list = _yList[j - 1];
+
+                double[] minMax = null;;
+                for(int i = 0; i < list.length; ++i)
+                {
+                    double[] mm = extentMap.get(list[i]);
+                    if( mm == null )
+                        continue;
+                    
+                    if( minMax == null )
+                        minMax = mm;
+                    else
+                    {
+                        minMax[0] = Math.min(minMax[0], mm[0]);
+                        minMax[1] = Math.max(minMax[1], mm[1]);
+                    }
+                }
+                
+                if( minMax != null )
+                {
+                    sb.append(", \"extentY").append(j).append("\":[")
+                        .append(minMax[0]).append(", ").append(minMax[1]).append("]");
+                }
+            }
+        }
+
         sb.append("}");
         
         ds.close();
@@ -77,7 +137,8 @@ public class GetYearlyDataHandler extends ApiHandler
         return makeResponseJson(sb.toString());
     }
     
-    private String makeDataBlock(String year, FileMapStore ds, int dateColumn) throws Exception
+    private String makeDataBlock( String year, FileMapStore ds, int dateColumn
+                                , Map<Integer, double[]> extentMap ) throws Exception
     {
         long startRow = -1;
         for(long r = 0; r < ds.getRowSize(); ++r)
@@ -92,10 +153,7 @@ public class GetYearlyDataHandler extends ApiHandler
         
         if( startRow == -1 )
             return null;
-        
-        int columnCount = 7; // (int) ds.getColumnSize();
-        int buyPosIdx = 7; // 구매 가능성 컬럼
-        
+
         StringBuilder sb = new StringBuilder();
         StringBuilder sbMarker = new StringBuilder();
 
@@ -105,18 +163,25 @@ public class GetYearlyDataHandler extends ApiHandler
         sb.append(",\"columns\":[");
         
         boolean markerOn = false;
-        for(int c = 0; c < columnCount; ++c)
+        for(int i = 0; i < _fetchColumns.length; ++i)
         {
-            if( c > 0 )
+            if( i > 0 )
                 sb.append(",");
+            
+            int c = _fetchColumns[i];
             
             ValueType vt = ds.getColumnType(c);
             String typeStr = "string";
+
+            double[] minMax = null;
             
             if( vt == ValueType.DateTime )
                 typeStr = "datetime";
             else if( vt == ValueType.Integer || vt == ValueType.Real )
+            {
                 typeStr = "number";
+                minMax = extentMap.get(c);
+            }
 
             sb.append("{ \"name\":\"").append(ds.getColumnName(c)).append("\"");
             sb.append(", \"type\":\"").append(typeStr).append("\"");
@@ -127,12 +192,12 @@ public class GetYearlyDataHandler extends ApiHandler
             {
                 String dStr = (String) ds.getCell(dateColumn, r);
 
-                if( !dStr.startsWith(year) )
+                if( dStr == null || !dStr.startsWith(year) )
                     break;
                 
                 if( c == 0)
                 {
-                    Double bFlag = (Double) ds.getCell(buyPosIdx, r);
+                    Double bFlag = (Double) ds.getCell(_buyPosIdx, r);
                     if( bFlag > 0 )
                     {
                         if( markerOn )
@@ -149,7 +214,19 @@ public class GetYearlyDataHandler extends ApiHandler
                 Object v = ds.getCell(c, r);
 
                 if( "number".equals(typeStr) || v == null )
+                {
                     sb.append(v);
+                    if( minMax == null )
+                    {
+                        minMax = new double[] { (Double) v, (Double) v };
+                        extentMap.put(c, minMax);
+                    }
+                    else
+                    {
+                        minMax[0] = Math.min(minMax[0], (Double) v);
+                        minMax[1] = Math.max(minMax[1], (Double) v);
+                    }
+                }
                 else
                     sb.append("\"").append(v).append("\"");
                 

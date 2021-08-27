@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import { isvalid, isDateTime, isundef } from '../grid/common.js';
 
 
-
 export const getSeriesColor = (idx) => {
   return d3.schemeTableau10[idx % d3.schemeTableau10.length];
 }
@@ -14,7 +13,7 @@ export const getSeriesColor = (idx) => {
  * @param {int} time 시간 축 데이터 인덱스. -1이면 데이터 인덱스를 의미함
  * @param {array of int} y1 기본 Y축을 기준으로 그릴 컬럼 인덱스 목록
  * @param {array of int} y2 보조 Y축을 기준으로 그릴 컬럼 인덱스 목록. 없을 수 있음.
- * @returns {
+ * @returns {dataSize, xData, yData, dateTimeAxis, extentX, extentY}
  *  dataSize: 데이터 크기, xData: X축 데이터(없을 수 있음), yData: Y축 데이터 [Y1, Y2],
  *  dateTimeAxis: X출 시간축 여부, extentX: X축 범위, extentY: Y축 범위 목록
  * }
@@ -90,5 +89,5 @@ export const getSeriesColor = (idx) => {
     return true;
   });
   
-  return { dataSize, xData, yData, dateTimeAxis, extentX, extentY };
+  return { dataSize, xLabel:(isvalid(xData) ? ds.getColumnName(time) : 'Index'), xData, yData, dateTimeAxis, extentX, extentY };
 }

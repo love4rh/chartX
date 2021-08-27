@@ -62,8 +62,8 @@
 
 .chartToolTip {
   position: absolute;
-  background-color: whitesmoke;
-  border: solid 1px #222;
+  background-color: white;
+  border: solid 1px #222; // rgb(12, 125, 157);
   padding: 2px 4px;
   border-radius: 4px;
   min-width: 110px;
@@ -71,8 +71,10 @@
 }
 
 .tooltipItem {
-  height: 24px;
-  line-height: 24px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: bolder;
+  line-height: 20px;
 }
 
 .legendBox {
