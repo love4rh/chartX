@@ -27,8 +27,8 @@ public class GetYearlyDataHandler extends ApiHandler
     static int _xColumn     = 0;
     static int _buyPosIdx   = 1; // 구매 가능성 컬럼
     
-    static int[][] _yList   = { { 2, 3 }, { 5, 6, 7, 8} }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
-    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
+    static int[][] _yList   = { { 2, 3 }, { 5, 4, 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
+    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
     
     
     @Override

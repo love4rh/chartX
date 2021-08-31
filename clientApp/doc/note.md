@@ -52,3 +52,8 @@ SMOOTH/FACTOR: 기울기(SLOPE/MV)을 무디게 만들기 위한 기준치. (SLO
 SLOPE/SMOOTH: SMOOTH/FACTOR으로 보정한 무딘 기울기
 CLINE/SMOOTH: SLOPE/SMOOTH의 누적합
 
+
+# TODO List
+바로 전 레코드부터 이전으로 지정한 값의 개수를 계산하는 함수 생성
+
+
