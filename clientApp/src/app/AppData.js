@@ -65,7 +65,7 @@ class AppData {
 
     apiProxy.getYearlyData(code,
       (res) => {
-        console.log('APPDATA OK', res);
+        // console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
           const { data, chart, extentY1, extentY2 } = res.response;
 

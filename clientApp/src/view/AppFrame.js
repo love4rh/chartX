@@ -46,7 +46,7 @@ class AppFrame extends Component {
 
   onResize = () => {
     const { clientWidth, clientHeight } = this._mainDiv.current;
-    // console.log('AppFrame onResize', clientWidth, clientHeight, window.innerWidth, window.innerHeight );
+    console.log('AppFrame onResize', clientWidth, clientHeight, window.innerWidth, window.innerHeight );
     this.setState({ clientWidth, clientHeight });
   }
 
@@ -79,7 +79,7 @@ class AppFrame extends Component {
 
     const { X, Y1, Y2 } = appData.getChartOption();
 
-    // console.log('chart dim', adjW, adjH, { cntW, cntH, scrollOn, chartWidth, chartHeight });
+    console.log('chart dim', adjW, adjH, { cntW, cntH, scrollOn, chartWidth, chartHeight });
 
     return (
       <div ref={this._mainDiv} className="appFrame">

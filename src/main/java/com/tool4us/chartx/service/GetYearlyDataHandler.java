@@ -25,27 +25,11 @@ public class GetYearlyDataHandler extends ApiHandler
     static String[] years = new String[] { "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021" };
     
     static int _xColumn     = 0;
-    static int[][] _yList   = { { 1, 2 }, { 3, 4, 5, 6 } };
-
-    static int _buyPosIdx   = 7; // 구매 가능성 컬럼
+    static int _buyPosIdx   = 1; // 구매 가능성 컬럼
     
-    static int[] _fetchColumns = null;
+    static int[][] _yList   = { { 2, 3 }, { 5, 6, 7, 8} }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
+    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
     
-    static
-    {
-        _fetchColumns = new int[ _yList[0].length + _yList[1].length + 1 ];
-        
-        _fetchColumns[0] = _xColumn;
-        
-        int idx = 1;
-        for(int i = 0; i < _yList.length; ++i)
-            for(int j = 0; j < _yList[i].length; ++j)
-            {
-                _fetchColumns[idx] = _yList[i][j];
-                idx += 1;
-            }
-    }
-
     
     @Override
     public String call(TomyRequestor req, TomyResponse res) throws Exception
