@@ -15,6 +15,8 @@ class AppData {
     this._dataList = [];
     this._chart = {};
 
+    this._colorMap = null;
+
     this._useCommonRange = false;
     this._userExtentY = [null, null];
     this._dataExtentY = [[0, 100], [0, 100]];
@@ -52,7 +54,8 @@ class AppData {
     this._dataList = [{
       title: 'sample',
       columns: columns,
-      editable: true
+      editable: false,
+      marker: [{ point: rindex.filter(d => d % 10 === 0), color: 'red' }, { point: rindex.filter(d => d % 7 === 0), color: 'blue' }]
     }];
 
     this._chart = { X: 0, Y1: [1, 2], Y2: [3, 4, 5] };
@@ -67,12 +70,13 @@ class AppData {
       (res) => {
         // console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
-          const { data, chart, extentY1, extentY2 } = res.response;
+          const { data, chart, colorMap, extentY1, extentY2 } = res.response;
 
           this._dataList = data;
           this._chart = chart;
           this._dataExtentY = [ extentY1, extentY2 ];
           this._userExtentY = cp([ extentY1, extentY2 ]);
+          this._colorMap = colorMap;
 
           this.pulseEvent('data changed');
         }
@@ -140,6 +144,10 @@ class AppData {
 
   isUseCommonRange = () => {
     return this._useCommonRange;
+  }
+
+  getColorMap = () => {
+    return this._colorMap;
   }
 };
 

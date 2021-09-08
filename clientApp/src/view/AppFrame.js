@@ -26,7 +26,8 @@ class AppFrame extends Component {
       drawKey: makeid(8),
       clientWidth: 800,
       clientHeight: 400,
-      dataList: [ new BasicDataSource(appData.getSampleData()) ]
+      dataList: [ new BasicDataSource(appData.getSampleData()) ],
+      zoomIndex: -1 // 확대된 차트 번호. -1이면 전체 표시
     };
 
     this._mainDiv = React.createRef();
@@ -62,9 +63,41 @@ class AppFrame extends Component {
     }
   }
 
-  render() {
+  handleChartEvent = (idx) => (type, ev) => {
+    // console.log('handleChartEvent', idx, type);
+
+    const { zoomIndex } = this.state;
+
+    if( 'doubleClick' === type ) {
+      this.setState({ zoomIndex: (zoomIndex !== -1 ? -1 : idx) });
+    }
+  }
+
+  makeChartComponent = (ds, i, chartWidth, chartHeight) => {
     const { appData } = this.props;
-    const { drawKey, clientWidth, clientHeight, dataList } = this.state;
+    const { drawKey } = this.state;
+
+    const { X, Y1, Y2 } = appData.getChartOption();
+    const chartData = convertToChartData({ ds, time: X, y1: Y1, y2: Y2 }, appData.getColorMap());
+
+    return (
+      <div key={`chart${i}-${drawKey}`} style={{ flexBasis:`${chartWidth}px`}}>
+        <RunTooltipChart
+          title={ds.title}
+          data={chartData}
+          showingRangeY1={appData.getExtentY(0)}
+          showingRangeY2={appData.getExtentY(1)}
+          withLegend={true} withSlider={false} withYSlider={false}
+          width={chartWidth} height={chartHeight}
+          markerData={appData.getMarkerList(i)}
+          onEvent={this.handleChartEvent(i)}
+        />
+      </div>
+    );
+  }
+
+  render() {
+    const { clientWidth, clientHeight, dataList, zoomIndex } = this.state;
 
     const chW = 900, chH = 460; // 기본 크기
     const adjW = clientWidth - 4, adjH = clientHeight - 4;
@@ -77,31 +110,12 @@ class AppFrame extends Component {
     const chartWidth = (adjW - (scrollOn ? 16 : 0)) / cntW;
     const chartHeight = adjH / cntH - 2;
 
-    const { X, Y1, Y2 } = appData.getChartOption();
-
-    console.log('chart dim', adjW, adjH, { cntW, cntH, scrollOn, chartWidth, chartHeight });
+    // console.log('chart dim', zoomIndex, adjW, adjH, { cntW, cntH, scrollOn, chartWidth, chartHeight });
 
     return (
       <div ref={this._mainDiv} className="appFrame">
-        { dataList.map((ds, i) =>
-          {
-            const chartData = convertToChartData({ ds, time: X, y1: Y1, y2: Y2 });
-
-            return (
-              <div key={`chart${i}-${drawKey}`} style={{ flexBasis:`${chartWidth}px`}}>
-                <RunTooltipChart
-                  title={ds.title}
-                  data={chartData}
-                  showingRangeY1={appData.getExtentY(0)}
-                  showingRangeY2={appData.getExtentY(1)}
-                  withLegend={true} withSlider={false} withYSlider={false}
-                  width={chartWidth} height={chartHeight}
-                  markerData={appData.getMarkerList(i)}
-                />
-              </div>
-            );
-          })
-        }
+        { zoomIndex !== -1 && this.makeChartComponent(dataList[zoomIndex], zoomIndex, adjW, adjH) }
+        { zoomIndex === -1 && dataList.map((ds, i) => this.makeChartComponent(ds, i, chartWidth, chartHeight)) }
       </div>
     );
   }

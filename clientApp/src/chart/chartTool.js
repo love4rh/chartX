@@ -18,7 +18,7 @@ export const getSeriesColor = (idx) => {
  *  dateTimeAxis: X출 시간축 여부, extentX: X축 범위, extentY: Y축 범위 목록
  * }
  */
- export const convertToChartData = (param) => {
+ export const convertToChartData = (param, colorMap) => {
   const { ds, time, y1, y2 } = param;
   const withX = isvalid(time) && time !== -1;
   const dateTimeAxis = withX && isDateTime(ds.getColumnType(time));
@@ -62,7 +62,7 @@ export const getSeriesColor = (idx) => {
     yData.push( y.map(c => {
       const data = [];
       const title = ds.getColumnName(c);
-      const color = getSeriesColor(cCount);
+      const color = colorMap && colorMap['' + c] ? colorMap['' + c]: getSeriesColor(cCount);
 
       cCount += 1;
 

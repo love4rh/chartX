@@ -52,3 +52,60 @@ SMOOTH/FACTOR: 기울기(SLOPE/MV)을 무디게 만들기 위한 기준치. (SLO
 SLOPE/SMOOTH: SMOOTH/FACTOR으로 보정한 무딘 기울기
 CLINE/SMOOTH: SLOPE/SMOOTH의 누적합
 
+
+RATIO/MV120: 120일 이동평균 대비 현재 가격(종가). 평균 수준 대비 낮은 정도를 판단할 수 있음.
+CHAIN/PLUS: 양의 값을 갖는 (상승세인) SLOPE/SMOOTH의 누적합.
+MV/20: 20일 이동평균
+MV/60: 60일 이동평균
+
+## 매수로직 01
+
+```
+{RATIO/MV120} < 1.05 --> 저가 판단
+AND {CHAIN/PLUS} > 0.1 --> 상승세
+AND {MV/20} / {MV/20}[-1] >= 1.002 --> 오름 판단
+AND {MV/60} < {MV/20} --> 상승세 판단
+```
+
+
+
+IIF( @ROWNUM = 1, 0,
+  IIF( {RATIO/MV120} < 1.05
+      AND {CHAIN/PLUS} > 0.1
+      AND {MV/20} / {MV/20}[-1] >= 1.002
+      AND {MV/60} < {MV/20}
+    , IIF( MOVINGSUM(@THIS, 40) = 0, 1, 0)
+    , 0 )
+)
+
+
+2주 내 MV20이 MV60 이하이면
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processingElem type="derived">
+	<dataSource alias="A1"><![CDATA[SORTBYBASE]]></dataSource>
+	<dataGroupName><![CDATA[ADD_DF]]></dataGroupName>
+	<ui>
+		<position x="479" y="345" />
+		<description><![CDATA[]]></description>
+	</ui>
+	<addColumns>
+		<derivedColumn name="DX"><![CDATA[@ROWNUM * 0.1]]></derivedColumn>
+		<derivedColumn name="RPRICE"><![CDATA[IIF( @ROWNUM = 1, (A := {LAST_P}) / {LAST_P}, {LAST_P} / A )]]></derivedColumn>
+		<derivedColumn name="MV/RP"><![CDATA[MOVINGAVG(@{RPRICE}, MIN(2, @ROWNUM))]]></derivedColumn>
+		<derivedColumn name="MV/LP"><![CDATA[MOVINGAVG( @{LAST_P}, MIN(2, @ROWNUM) )]]></derivedColumn>
+		<derivedColumn name="SLOPE/MV"><![CDATA[IIF(@ROWNUM < 5, 0, LINEARSLOPE(@{DX}, @{MV/RP}, 5))]]></derivedColumn>
+		<derivedColumn name="CLINE"><![CDATA[IIF( @ROWNUM = 1, {SLOPE/MV}, GETVALUE(@THIS, -1) + {SLOPE/MV} )]]></derivedColumn>
+		<derivedColumn name="SMOOTH/FACTOR"><![CDATA[SQRT(MOVINGVAR(@{SLOPE/MV}, 20)) * 0.8]]></derivedColumn>
+		<derivedColumn name="SLOPE/SMOOTH"><![CDATA[IIF( ISBETWEEN({SLOPE/MV}, -{SMOOTH/FACTOR}, {SMOOTH/FACTOR}), 0, {SLOPE/MV} )]]></derivedColumn>
+		<derivedColumn name="CLINE/SMOOTH"><![CDATA[IIF( @ROWNUM = 1, {SLOPE/SMOOTH}, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH} )]]></derivedColumn>
+		<derivedColumn name="CHAIN/PLUS"><![CDATA[IIF( @ROWNUM < 2, 0,
+  IIF( {SLOPE/SMOOTH} >= 0, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH}, 0 )
+)]]></derivedColumn>
+		<derivedColumn name="CHAIN/MINUS"><![CDATA[IIF( @ROWNUM < 2, 0,
+  IIF( {SLOPE/SMOOTH} <= 0, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH}, 0 )
+)]]></derivedColumn>
+		<derivedColumn name="CHAIN/VAL"><![CDATA[{CHAIN/PLUS} + {CHAIN/MINUS}]]></derivedColumn>
+	</addColumns>
+</processingElem>

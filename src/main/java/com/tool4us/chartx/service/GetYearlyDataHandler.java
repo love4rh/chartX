@@ -27,8 +27,8 @@ public class GetYearlyDataHandler extends ApiHandler
     static int _xColumn     = 0;
     static int _buyPosIdx   = 1; // 구매 가능성 컬럼
     
-    static int[][] _yList   = { { 2, 3 }, { 5, 6, 7, 8} }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
-    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
+    static int[][] _yList   = { { 2, 3, 4 }, { 5, 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
+    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
     
     
     @Override
@@ -61,6 +61,20 @@ public class GetYearlyDataHandler extends ApiHandler
             .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]")
             .append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]")
             .append("}");
+        
+        // Data Column Index --> Color
+        sb.append(", \"colorMap\": {")
+          .append("\"2\": \"#4e79a7\", ")
+          .append("\"3\": \"#f28e2c\", ")
+          .append("\"4\": \"#e15759\", ")
+          .append("\"5\": \"#76b7b2\", ")
+          .append("\"6\": \"#59a14f\", ")
+          .append("\"7\": \"#edc949\", ")
+          .append("\"8\": \"#af7aa1\", ")
+          .append("\"9\": \"#ff9da7\", ")
+          .append("\"10\": \"#9c755f\", ")
+          .append("\"11\": \"#bab0ab\" }")
+        ;
 
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
         sb.append(", \"data\":[");
@@ -172,6 +186,7 @@ public class GetYearlyDataHandler extends ApiHandler
             sb.append(", \"data\":[");
             
             boolean assigned = false;
+            Object pv = null;
             for(long r = startRow; r < ds.getRowSize(); ++r)
             {
                 String dStr = (String) ds.getCell(dateColumn, r);
@@ -196,10 +211,17 @@ public class GetYearlyDataHandler extends ApiHandler
                     sb.append(",");
                 
                 Object v = ds.getCell(c, r);
+                
+                if( v == null )
+                {
+                    v = pv;
+                    System.out.println("null value found in (" + c + ", " + r + ")");
+                }
 
                 if( "number".equals(typeStr) || v == null )
                 {
                     sb.append(v);
+
                     if( minMax == null )
                     {
                         minMax = new double[] { (Double) v, (Double) v };
@@ -214,6 +236,7 @@ public class GetYearlyDataHandler extends ApiHandler
                 else
                     sb.append("\"").append(v).append("\"");
                 
+                pv = v;
                 assigned = true;
             }
 
@@ -224,7 +247,14 @@ public class GetYearlyDataHandler extends ApiHandler
         sb.append(",\"editable\":false");
 
         if( markerOn )
-            sb.append(", \"marker\": [").append(sbMarker.toString()).append("]");
+        {
+            sb.append(", \"marker\": [");
+            
+            sb.append("{ \"point\":[").append(sbMarker.toString()).append("]")
+              .append(", \"color\":\"red\" }");
+            
+            sb.append("]");
+        }
 
         sb.append("}");
         

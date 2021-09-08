@@ -19,6 +19,7 @@ import './styles.scss';
  */ 
 class RunTooltipChart extends Component {
   static propTypes = {
+    onEvent: PropTypes.func, // 차트에서 발생하는 이벤트 핸들러
     width: PropTypes.number, // 차트 가로 너비
     height: PropTypes.number, // 차트 세로 넢이
     title: PropTypes.string, // 차트 제목
@@ -29,7 +30,7 @@ class RunTooltipChart extends Component {
     withSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (가로축)
     withYSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (세로축)
     withLegend: PropTypes.bool, // 범례 표시 여부
-    markerData: PropTypes.array, // Marker 데이터. X 축 인덱스. Y는 첫 번째 시리즈의 값을 이용함
+    markerData: PropTypes.array, // Marker 데이터. [{ point:[ Marking 할 X 축 인덱스, ...], color:'red' }, ... ]. Y는 첫 번째 시리즈의 값을 이용함
   }
 
   constructor(props) {
@@ -285,6 +286,7 @@ class RunTooltipChart extends Component {
       .classed('chartToolTip', true).classed(tooltipDivID, true)
       .style('display', 'none');
 
+    // Mouse Over시 Tooltip / Guide Line 처리
     const cbShowToolTip = (ev) => {
       let dataIdx = 0;
       const x0 = xScaler.invert(ev.offsetX - margin.LEFT);
@@ -396,21 +398,24 @@ class RunTooltipChart extends Component {
       const y1Scale = axesY[0]['scale'];
       const y1Data = yData[0].data;
 
-      markerData.map(idx => {
-        mg.append('circle')
-          .on('mouseover', (ev) => {
-            if( isvalid(this.hideTimeOut) ) {
-              clearTimeout(this.hideTimeOut);
-            }
-            cbShowToolTip(ev);
-          })
-          .attr('cx', xScaler(idx + 1))
-          .attr('cy', y1Scale(y1Data[idx]))
-          .attr('r', 4)
-          .attr('fill', 'red')
-          .attr('stroke', 'black')
-          .attr('stroke-width', '1')
-        ;
+      markerData.map(md => {
+        md.point.map(idx => {
+          mg.append('circle')
+            .on('mouseover', (ev) => {
+              if( isvalid(this.hideTimeOut) ) {
+                clearTimeout(this.hideTimeOut);
+              }
+              cbShowToolTip(ev);
+            })
+            .attr('cx', xScaler(idx + 1))
+            .attr('cy', y1Scale(y1Data[idx])) // TODO 사용자 정의로 확장
+            .attr('r', 4)
+            .attr('fill', md.color)
+            .attr('stroke', 'black')
+            .attr('stroke-width', '1')
+          ;
+          return true;
+        });
         return true;
       });
     } // end of marker-if
@@ -446,6 +451,14 @@ class RunTooltipChart extends Component {
     this.setState({ data: data });
   }
 
+  handleDblClick = (ev) => {
+    const { onEvent } = this.props;
+
+    if( onEvent ) {
+      onEvent('doubleClick', ev);
+    }
+  }
+
   render() {
     const { width } = this.props;
     const {
@@ -476,7 +489,7 @@ class RunTooltipChart extends Component {
               />
             </div>
           }
-          <div ref={chartDiv} onMouseOut={this.handleMouseOut} />
+          <div ref={chartDiv} onDoubleClick={this.handleDblClick} onMouseOut={this.handleMouseOut} />
           { hasY2 && withYSlider &&
             <div style={{
               'width': `${sliderSize}px`,
