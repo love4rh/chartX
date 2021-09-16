@@ -26,7 +26,7 @@ public class GetCountedDataHandler extends ApiHandler
     static int _xColumn     = 0;
     static int _suggestIdx  = 1; // 0: 아무것도 아님, 1: 구매제안, 2: 판매제안
     
-    static int[][] _yList   = { { 2, 3, 4 }, { 5, 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
+    static int[][] _yList   = { { 2, 3, 4 }, { 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
     static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
     
     
@@ -65,11 +65,11 @@ public class GetCountedDataHandler extends ApiHandler
         // Data Column Index --> Color
         sb.append(", \"colorMap\": {")
           .append("\"2\": \"#4e79a7\", ")
-          .append("\"3\": \"#edc949\", ")
-          .append("\"4\": \"#76b7b2\", ")
-          .append("\"5\": \"#e15759\", ")
+          .append("\"3\": \"#e15759\", ")
+          .append("\"4\": \"#59a14f\", ")
+          .append("\"5\": \"#edc949\", ")
           .append("\"6\": \"#f28e2c\", ")
-          .append("\"7\": \"#59a14f\", ")
+          .append("\"7\": \"#76b7b2\", ")
           .append("\"8\": \"#af7aa1\", ")
           .append("\"9\": \"#ff9da7\", ")
           .append("\"10\": \"#9c755f\", ")
@@ -83,7 +83,7 @@ public class GetCountedDataHandler extends ApiHandler
         
         long shownCount = countStr == null || countStr.isEmpty() ? 250 : Long.parseLong(countStr); // 한 차트에 보일 데이터 개수
         long dataCount = ds.getRowSize();
-        long missing = dataCount % shownCount; // 앞쪽 표시하지 않을 데이터 개수
+        long missing = dataCount <= shownCount ? 0 : dataCount % shownCount; // 앞쪽 표시하지 않을 데이터 개수
         
         boolean assigned = false;
         for(long r = missing; r < dataCount; r += shownCount)
