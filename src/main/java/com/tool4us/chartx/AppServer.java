@@ -88,8 +88,11 @@ public class AppServer implements IStaticFileMap
             vDir = OPT.virtualRoot();
 
             String pCode = uriPath.substring(1);
-            if( pCode != null && pCode.length() == 6 )
+            if( pCode != null && pCode.length() >= 6 )
             {
+                uriPath = "/" + getRootFile();
+
+                /*
                 boolean allDigit = true;
                 for(int i = 0; allDigit && i < pCode.length(); ++i)
                 {
@@ -98,6 +101,7 @@ public class AppServer implements IStaticFileMap
                 
                 if( allDigit )
                     uriPath = "/" + getRootFile();
+                // */
             }
         }
         

@@ -68,6 +68,7 @@
   border-radius: 4px;
   min-width: 110px;
   opacity: 1.0;
+  z-index: 999;
 }
 
 .tooltipItem {
@@ -84,6 +85,7 @@
   align-items: flex-start;
   justify-content: center;
   flex-wrap: nowrap;
+  z-index: 0;
 }
 
 .legendItemBox {

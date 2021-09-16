@@ -227,7 +227,7 @@ class RangeSlider extends Component {
     } else if( isvalid(labelData) ) {
       valueText = sRange.map(v => labelData[Math.min(labelData.length - 1, Math.max(0, Math.floor(v) - 1))] );
     } else {
-      valueText = sRange.map(v => '' + Math.floor(v));
+      valueText = sRange.map(v => '' + Math.round(v * 100) / 100);
     }
 
     const thumbPos = sRange.map(v => (vertical ? (range[1] - v) : (v - range[0])) / (range[1] - range[0]) * 100 );
