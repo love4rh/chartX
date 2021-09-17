@@ -67,7 +67,7 @@ class AppData {
     this.compCode = code;
 
     // apiProxy.getYearlyData(code,
-    apiProxy.getCountedData(code, 250,
+    apiProxy.getCountedData(code, 450,
       (res) => {
         // console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {

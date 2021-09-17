@@ -116,4 +116,23 @@ public class AppOptions
         Double d = (Double) getOption(keyPath);
         return d == null ? defVal : d;
     }
+    
+    public int[] getAsIntegerArray(String keyPath)
+    {
+        JSONArray ar = (JSONArray) getOption(keyPath);
+        
+        if( ar == null )
+        {
+            return null;
+        }
+        
+        int[] arInt = new int[ar.length()];
+        
+        for(int i = 0; i < ar.length(); ++i)
+        {
+            arInt[i] = (int) ar.getLong(i);
+        }
+        
+        return arInt;
+    }
 }

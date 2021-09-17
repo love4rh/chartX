@@ -49,6 +49,12 @@ public enum AppSetting
     private boolean     _keepOld = true;
     
     private Map<String, String>     _param = new TreeMap<String, String>();
+    
+    private int _xColumn     = 0;
+    private int _suggestIdx  = 1; // 0: 아무것도 아님, 1: 구매제안, 2: 판매제안
+    
+    private int[][] _yList   = { { 2, 3, 4 }, { 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
+    private int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
 
     
     private AppSetting()
@@ -101,6 +107,14 @@ public enum AppSetting
 
         if( _temporaryFolder == null )
             _temporaryFolder = UsefulTool.GetModulePath() + File.separator + "temporary";
+        
+        _xColumn = _options.getAsInteger("chart/x", 0);
+        _suggestIdx = _options.getAsInteger("chart/suggest", 1);
+
+        _yList[0] = _options.getAsIntegerArray("chart/y1");
+        _yList[1] = _options.getAsIntegerArray("chart/y2");
+        
+        _fetchColumns = _options.getAsIntegerArray("chart/data");
     }
     
     public int port()
@@ -161,5 +175,30 @@ public enum AppSetting
     public boolean isKeepOldMade()
     {
         return this._keepOld;
+    }
+    
+    public int getChartX()
+    {
+        return _xColumn;
+    }
+
+    public int getChartSuggest()
+    {
+        return _suggestIdx;
+    }
+    
+    public int[][] getChartY()
+    {
+        return _yList;
+    }
+    
+    public int[] getChartData()
+    {
+        return _fetchColumns;
+    }
+    
+    public String getCodesFile()
+    {
+        return _options.getAsString("resource/codeFile");
     }
 }

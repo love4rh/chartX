@@ -2,6 +2,7 @@ package com.tool4us.chartx;
 
 import static com.tool4us.treatdb.task.JobQueue.JQ;
 import static com.tool4us.chartx.AppSetting.OPT;
+import static com.tool4us.chartx.AppResource.RES;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -90,6 +91,8 @@ public class AppMain
 
         _batchJob = new BatchJobs();
         _batchJob.start();
+        
+        RES.reload();
     }
 
     /**

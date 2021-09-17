@@ -24,6 +24,8 @@ public enum ApiError
     OverCapacityLimit(3002, "over capacity limit"),
 
     NeedRerequest(9001, "need to request again"),
+    
+    NotAuthorized(9901, "Non-authorized client"),
 
     ServerError(9999, "Server Error")
     ;

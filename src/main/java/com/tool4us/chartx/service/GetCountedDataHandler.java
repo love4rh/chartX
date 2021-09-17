@@ -23,16 +23,12 @@ import com.tool4us.net.http.TomyApi;
 @TomyApi(paths={ "/ctx" })
 public class GetCountedDataHandler extends ApiHandler
 {
-    static int _xColumn     = 0;
-    static int _suggestIdx  = 1; // 0: 아무것도 아님, 1: 구매제안, 2: 판매제안
-    
-    static int[][] _yList   = { { 2, 3, 4 }, { 6 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
-    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
-    
-    
     @Override
     public String call(TomyRequestor req, TomyResponse res) throws Exception
     {
+        int _xColumn     = OPT.getChartX();
+        int[][] _yList = OPT.getChartY();
+        
         String authCode = req.getHeaderValue("x-auth-code");
         
         if( emptyCheck(authCode) )
@@ -58,10 +54,15 @@ public class GetCountedDataHandler extends ApiHandler
         sb.append("{");
 
         sb.append("\"chart\":{ \"X\": ").append(_xColumn)
-            .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]")
-            .append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]")
-            .append("}");
+          .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]");
         
+        if( _yList[1] != null )
+        {
+            sb.append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]");
+        }
+        
+        sb.append("}");
+
         // Data Column Index --> Color
         sb.append(", \"colorMap\": {")
           .append("\"2\": \"#4e79a7\", ")
@@ -142,6 +143,10 @@ public class GetCountedDataHandler extends ApiHandler
     private String makeDataBlock( long startRow, long endRow, FileMapStore ds, int dateColumn
                                 , Map<Integer, double[]> extentMap ) throws Exception
     {
+        int _suggestIdx  = OPT.getChartSuggest();
+        int[] _fetchColumns = OPT.getChartData();
+        
+        
         StringBuilder sb = new StringBuilder();
         StringBuilder[] sbMarker = { new StringBuilder(), new StringBuilder() };
 

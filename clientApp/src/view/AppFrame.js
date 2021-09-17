@@ -99,8 +99,8 @@ class AppFrame extends Component {
   render() {
     const { clientWidth, clientHeight, dataList, zoomIndex } = this.state;
 
-    const chW = 900, chH = 460; // 기본 크기
     const adjW = clientWidth - 4, adjH = clientHeight - 4;
+    const chW = 900, chH = 460; // 기본 크기
 
     const cntW = Math.round(adjW / chW),
           cntH = Math.round(adjH / chH);

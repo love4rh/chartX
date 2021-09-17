@@ -3,6 +3,7 @@ import axios from 'axios';
 import { makeid, isvalid } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
+// export const _serverBaseUrl_ = 'http://stock.tool4.us';
 export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
