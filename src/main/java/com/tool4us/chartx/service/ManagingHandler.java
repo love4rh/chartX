@@ -1,6 +1,7 @@
 package com.tool4us.chartx.service;
 
 import static com.tool4us.chartx.AppSetting.OPT;
+import static com.tool4us.chartx.AppResource.RES;
 
 import com.tool4us.net.http.TomyRequestor;
 import com.tool4us.net.http.TomyResponse;
@@ -35,7 +36,9 @@ public class ManagingHandler extends ApiHandler
         if( "reload".equals(actType) )
         {
             OPT.reload();
+            RES.reload();
         }
+        
 
         return makeResponseJson(ApiError.Success);
     }

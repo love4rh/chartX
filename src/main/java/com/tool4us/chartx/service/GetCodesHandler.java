@@ -5,7 +5,6 @@ import static com.tool4us.chartx.AppResource.RES;
 import com.tool4us.net.http.TomyRequestor;
 import com.tool4us.net.http.TomyResponse;
 
-import com.tool4us.net.http.ApiError;
 import com.tool4us.net.http.ApiHandler;
 import com.tool4us.net.http.TomyApi;
 

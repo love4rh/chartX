@@ -62,6 +62,11 @@ public enum AppSetting
         _options = new AppOptions();
     }
     
+    public boolean checkAuthCode(String authCode)
+    {
+        return authCode != null && !authCode.isEmpty();
+    }
+    
     public void initialize(String configFile) throws Exception
     {
         _configFile = configFile;
@@ -200,5 +205,10 @@ public enum AppSetting
     public String getCodesFile()
     {
         return _options.getAsString("resource/codeFile");
+    }
+    
+    public String getBuyPointFile()
+    {
+        return _options.getAsString("resource/guessBPFile");
     }
 }

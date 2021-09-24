@@ -52,6 +52,24 @@ const apiProxy = {
 			});
 	},
 
+	getBuyPointData: (cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios.get(`${_serverBaseUrl_}/gbp`, {
+			headers: {
+				'Content-Type': 'application/json;charset=utf-8',
+				'x-user-token': _userToken,
+				'x-auth-code': `auth code here`
+			}
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			if( cbErr ) { cbErr(err); }
+		});
+	},
+
 	getCountedData: (compCode, count, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
@@ -66,7 +84,6 @@ const apiProxy = {
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
 			apiProxy.leaveWaiting();
-			// console.log('apiProxy ERR', err);
 			if( cbErr ) { cbErr(err); }
 		});
 	},

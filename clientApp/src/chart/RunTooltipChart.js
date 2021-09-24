@@ -65,7 +65,7 @@ class RunTooltipChart extends Component {
       chartDiv: React.createRef(),
       data: { dataSize, xLabel, xData, dateTimeAxis, extentX, yData, extentY1:extentY[0], extentY2:extentY[1] },
       useY2,
-      margin: { LEFT: 70, RIGHT: 70, TOP: 20, BOTTOM: 70 },
+      margin: { LEFT: 70, RIGHT: 70, TOP: 5, BOTTOM: 70 },
       canvasWidth: width - (withYSlider ? (sliderSize + (useY2 ? sliderSize : 0)) : 0),
       canvasHeight: height - (withSlider ? sliderSize : 0) - (withLegend ? 36 : 0),
       chartElement: {},
@@ -211,7 +211,7 @@ class RunTooltipChart extends Component {
 
   updateD3Chart = () => {
     const {
-      chartDiv, canvasWidth, canvasHeight,
+      canvasWidth, canvasHeight,
       compID, margin, data, chartElement,
       userXExtent, userY1Extent, userY2Extent, markerData
     } = this.state;
@@ -219,7 +219,7 @@ class RunTooltipChart extends Component {
     const { bisectDate, axisX, axesY } = chartElement;
 
     // xData가 null이면 data index임. xData가 null이 아니고 dateTimeAxis가 false이면 label임.
-    const { dateTimeAxis, dataSize, xLabel, xData, extentX, yData, extentY1, extentY2 } = data;
+    const { dateTimeAxis, dataSize, xData, extentX, yData, extentY1, extentY2 } = data;
 
     const WIDTH = canvasWidth - margin.LEFT - margin.RIGHT;
     const HEIGHT = canvasHeight - margin.TOP - margin.BOTTOM;
@@ -262,14 +262,14 @@ class RunTooltipChart extends Component {
     const xScaler = axisX['scale'];
 
     // Overlay for handling mouse event
+    const guideID = compID + '_guider';
     const focusDivID = compID + '_focus';
     const overlayDivID = compID + '_overlay';
-    const tooltipDivID = compID + '_tooltip';
 
-    [focusDivID, overlayDivID, tooltipDivID].map(k => d3.select('.' + k).remove());
+    d3.select('.' + guideID).remove();
 
     // add guidance line
-    const hoverLine = g.append('g')
+    const hoverLine = g.append('g').classed(guideID, true)
       .classed('focus', true).classed(focusDivID, true)
       .style('display', 'none');
 
@@ -281,10 +281,61 @@ class RunTooltipChart extends Component {
       .attr('class', 'y-hover-line hover-line')
       .attr('x1', 0).attr('x2', WIDTH);
 
-    const tooltipBox = d3.select(chartDiv.current)
-      .append('div')
-      .classed('chartToolTip', true).classed(tooltipDivID, true)
+    const tipHalf = 100 / 2;
+    
+    const axisTipX = g.append('g')
+      .classed(guideID, true).classed(compID + '_tipX', true)
       .style('display', 'none');
+
+    axisTipX.append('polygon')
+      .attr('points', `0,5 ${tipHalf - 5},5 ${tipHalf},0 ${tipHalf + 5},5 ${tipHalf * 2},5 ${tipHalf * 2},28 0,28`)
+      .attr('fill', 'black').attr('stoke', 'none');
+    
+    axisTipX.append('text')
+      .classed('axis-tip-x', true)
+      .attr('x', `${tipHalf}`).attr('y', '21')
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .text('2021-12-22');
+
+    const tipSize = margin.LEFT;
+    const axisTipY1 = g.append('g')
+      .classed(guideID, true).classed(compID + '_tipY1', true)
+      .style('display', 'none');
+
+    axisTipY1.append('polygon')
+      .attr('points', `0,0 ${tipSize},0 ${tipSize + 12},12 ${tipSize},24 0,24`)
+      .attr('fill', 'black').attr('stoke', 'none');
+
+    axisTipY1.append('text')
+      .classed('axis-tip-x', true)
+      .attr('x', `${tipSize - 5}`).attr('y', '16')
+      .attr('text-anchor', 'end')
+      .attr('fill', 'white')
+      .text(' ');
+
+    const tipElements = [ hoverLine, axisTipX, axisTipY1 ];
+
+    let axisTipY2 = null;
+
+    if( isvalid(axesY[1]) ) {
+      axisTipY2 = g.append('g')
+        .classed(guideID, true).classed(compID + '_tipY2', true)
+        .style('display', 'none');
+
+      axisTipY2.append('polygon')
+        .attr('points', `0,12 12,0 ${tipSize + 12},0 ${tipSize + 12},24 12,24`)
+        .attr('fill', 'black').attr('stoke', 'none');
+
+      axisTipY2.append('text')
+        .classed('axis-tip-x', true)
+        .attr('x', `15`).attr('y', '16')
+        .attr('text-anchor', 'start')
+        .attr('fill', 'white')
+        .text(' ');
+
+      tipElements.push(axisTipY2);
+    }
 
     // Mouse Over시 Tooltip / Guide Line 처리
     const cbShowToolTip = (ev) => {
@@ -299,13 +350,30 @@ class RunTooltipChart extends Component {
         if( !v0 || !v1 ) { return; }
 
         hoverLine.select('.x-hover-line').attr('transform', `translate(${xScaler(x0 - v0 > v1 - x0 ? v1 : v0)}, 0)`);
+        axisTipX.attr('transform', `translate(${xScaler(x0 - v0 > v1 - x0 ? v1 : v0)}, ${HEIGHT})`);
       } else {
         dataIdx = Math.max(0, Math.min(Math.round(x0) - 1, dataSize - 1));
         hoverLine.select('.x-hover-line').attr('transform', `translate(${xScaler(dataIdx + 1)}, 0)`);
+        axisTipX.attr('transform', `translate(${xScaler(dataIdx + 1) - tipHalf}, ${HEIGHT})`);
       }
 
       hoverLine.select('.y-hover-line').attr('transform', `translate(0, ${ev.offsetY - margin.TOP})`);
 
+      axisTipX.select('.axis-tip-x').text(`${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1})`); // TODO DateTime 처리
+
+      const y1Val = Math.round(axesY[0]['scale'].invert(ev.offsetY - margin.TOP));
+      
+      axisTipY1.attr('transform', `translate(-80, ${ev.offsetY - margin.TOP - 12})`);
+      axisTipY1.select('.axis-tip-x').text(`${numberWithCommas(y1Val)}`);
+
+      if( isvalid(axisTipY2) ) {
+        const y2Val =  Math.round(axesY[1]['scale'].invert(ev.offsetY - margin.TOP) * 10000) / 10000;
+      
+        axisTipY2.attr('transform', `translate(${WIDTH}, ${ev.offsetY - margin.TOP - 12})`);
+        axisTipY2.select('.axis-tip-x').text(`${y2Val}`);
+      }
+
+      /*
       // Tooltip box
       tooltipBox.html(''); // 기존 툴팁 삭제
 
@@ -322,23 +390,29 @@ class RunTooltipChart extends Component {
         return true;
       });
 
-      const guideBoxWidth = 120 + 10;
+      const guideBoxWidth = 125 + 10;
       const guideBoxHeight = yData.length * 24 + 10;
-      const maxX = chartDiv.current.offsetLeft + chartDiv.current.offsetWidth;
-      const maxY = chartDiv.current.offsetTop + chartDiv.current.offsetHeight
+      const maxX = chartTag.offsetLeft + chartTag.offsetWidth;
+      const maxY = chartTag.offsetTop + chartTag.offsetHeight;
       const pX = ev.clientX + guideBoxWidth + margin.LEFT > maxX ? ev.clientX - guideBoxWidth + 5 : ev.clientX + 10;
       const pY = ev.clientY + guideBoxHeight + margin.BOTTOM > maxY ? ev.clientY - guideBoxHeight + 10 : ev.clientY + 10;
 
-      tooltipBox.attr('style', `left: ${pX}px; top: ${pY}px;`);
+      tooltipBox.attr('style', `left: ${pX}px; top: ${pY}px;`); // */
+
+      // toolBoxX.text(`${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1})`);
+      // toolBoxX.attr('style', `left: ${pX - chartTag.offsetLeft}px; top: ${-100}px;`);
     }; // end of callback for showing tooptip
 
-    g.append('rect')
-      .attr('class', 'overlay ' + overlayDivID)
-      .attr('width', WIDTH)
-      .attr('height', HEIGHT)
-      .on('mouseover', () => { hoverLine.style('display', null); tooltipBox.style('display', null); })
-      // [아래] line의 mouse over 이벤트 시 발생하여 가이드 선이 사라지는 현상이 있어 Timeout을 두어 처리하였음
-      .on('mouseout', () => this.hideTimeOut = setTimeout(() => { hoverLine.style('display', 'none'); tooltipBox.style('display', 'none'); this.hideTimeOut = null; }, 100) )
+    g.append('rect').classed(guideID, true)
+      .classed('overlay', true).classed(overlayDivID, true)
+      .attr('width', WIDTH).attr('height', HEIGHT)
+      .on('mouseover', () => { tipElements.map(e => e.style('display', null)) })
+      .on('mouseout', (ev) => {
+        const mX = ev.offsetX - margin.LEFT, mY = ev.offsetY - margin.TOP;
+        if( mX <= 0 || mX >= WIDTH || mY <= 0 || mY >= HEIGHT ) {
+          tipElements.map(e => e.style('display', 'none'));
+        }
+      })
       .on('mousemove', cbShowToolTip);
     // end of overlay
 
@@ -348,7 +422,7 @@ class RunTooltipChart extends Component {
       .attr('id', clipBoxID)
       .append('rect')
       .attr('width', WIDTH)
-      .attr('height', HEIGHT)
+      .attr('height', HEIGHT);
 
     // Line Series Path generator
     yData.map((dd, idx) => {
@@ -365,15 +439,9 @@ class RunTooltipChart extends Component {
       g.append('g')
         .attr('clip-path', `url(#${clipBoxID})`)
         .append('path')
-        .on('mouseover', (ev) => {
-          d3.select('.' + lineID).classed('selectedLine', true);
-          if( isvalid(this.hideTimeOut) ) {
-            clearTimeout(this.hideTimeOut);
-          }
-          cbShowToolTip(ev);
-        })
-        .on('mouseout', () => d3.select('.' + lineID).classed('selectedLine', false) )
         .classed(lineID, true)
+        .on('mouseover', () => d3.select('.' + lineID).classed('selectedLine', true) )
+        .on('mouseout',  () => d3.select('.' + lineID).classed('selectedLine', false) )
         .attr('fill', 'none')
         .attr('stroke', dd.color)
         .attr('stroke-width', '2px')
@@ -401,12 +469,6 @@ class RunTooltipChart extends Component {
       markerData.map(md => {
         md.point.map(idx => {
           mg.append('circle')
-            .on('mouseover', (ev) => {
-              if( isvalid(this.hideTimeOut) ) {
-                clearTimeout(this.hideTimeOut);
-              }
-              cbShowToolTip(ev);
-            })
             .attr('cx', xScaler(idx + 1))
             .attr('cy', y1Scale(y1Data[idx])) // TODO 사용자 정의로 확장
             .attr('r', 4)
@@ -419,15 +481,6 @@ class RunTooltipChart extends Component {
         return true;
       });
     } // end of marker-if
-  }
-
-  handleMouseOut = () => {
-    const { compID } = this.state;
-
-    const focusDivID = compID + '_focus';
-    const tooltipDivID = compID + '_tooltip';
-
-    [focusDivID, tooltipDivID].map(k => d3.select('.' + k).style('display', 'none') );
   }
 
   handleSliderEvent = (axisType) => (type, param) => {
@@ -451,6 +504,11 @@ class RunTooltipChart extends Component {
     this.setState({ data: data });
   }
 
+  handleMouseOut = (ev) => {
+    const { compID } = this.state;
+    ['_focus', '_tooltip'].map(s => d3.select('.' + compID + s).style('display', 'none'));
+  }
+
   handleDblClick = (ev) => {
     const { onEvent } = this.props;
 
@@ -460,7 +518,7 @@ class RunTooltipChart extends Component {
   }
 
   render() {
-    const { width } = this.props;
+    const { width, title } = this.props;
     const {
       data, chartDiv, margin,
       withSlider, withYSlider, withLegend,
@@ -473,39 +531,7 @@ class RunTooltipChart extends Component {
 
     return (
       <div className="chartMain">
-        <div className="chartTopDiv">
-          { withYSlider &&
-            <div style={{
-              'width': `${sliderSize}px`,
-              'padding': `${p}px 0`,
-              'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
-            }}>
-              <RangeSlider
-                valueRange={extentY[0]}
-                selectedRange={userY1Extent}
-                onEvent={this.handleSliderEvent('Y1')}
-                vertical={true}
-                tipTextPos={'right'}
-              />
-            </div>
-          }
-          <div ref={chartDiv} onDoubleClick={this.handleDblClick} onMouseOut={this.handleMouseOut} />
-          { hasY2 && withYSlider &&
-            <div style={{
-              'width': `${sliderSize}px`,
-              'padding': `${p}px 0`,
-              'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
-            }}>
-              <RangeSlider
-                valueRange={extentY[1]}
-                selectedRange={userY2Extent}
-                onEvent={this.handleSliderEvent('Y2')}
-                vertical={true}
-                tipTextPos={'left'}
-              />
-            </div>
-          }
-        </div>
+        <div className="chartTitleDiv">{title}</div>
         { withLegend &&
           <div className="legendBox" style={{ width:`${width}px` }}>
             { yData.map((dd, idx) => {
@@ -526,6 +552,40 @@ class RunTooltipChart extends Component {
             })}
           </div>
         }
+        <div className="chartTopDiv">
+          { withYSlider &&
+            <div style={{
+              'width': `${sliderSize}px`,
+              'padding': `${p}px 0`,
+              'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
+            }}>
+              <RangeSlider
+                valueRange={extentY[0]}
+                selectedRange={userY1Extent}
+                onEvent={this.handleSliderEvent('Y1')}
+                vertical={true}
+                tipTextPos={'right'}
+              />
+            </div>
+          }
+          <div ref={chartDiv} onDoubleClick={this.handleDblClick} />
+          { hasY2 && withYSlider &&
+            <div style={{
+              'width': `${sliderSize}px`,
+              'padding': `${p}px 0`,
+              'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
+            }}>
+              <RangeSlider
+                valueRange={extentY[1]}
+                selectedRange={userY2Extent}
+                onEvent={this.handleSliderEvent('Y2')}
+                vertical={true}
+                tipTextPos={'left'}
+              />
+            </div>
+          }
+        </div>
+        
         { withSlider &&
           <div style={{
             'width': `${width - margin.LEFT - margin.RIGHT + (a - p) * 2 - (withYSlider ? sliderSize : 0) - (hasY2 ? sliderSize : 0)}px`,

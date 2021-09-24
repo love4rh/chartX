@@ -89,7 +89,12 @@ public class AppServer implements IStaticFileMap
 
             String pCode = uriPath.substring(1);
             
-            if( pCode != null && !pCode.isEmpty() )
+            // pCode가 특수한 경우라면
+            if( "guessBP".equals(pCode) )
+            {
+                uriPath = "/" + getRootFile();
+            }
+            else if( pCode != null && !pCode.isEmpty() )
             {
             	if( pCode.length() == 7 && pCode.endsWith("B") )
             	{

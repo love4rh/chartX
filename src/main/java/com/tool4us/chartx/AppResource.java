@@ -2,6 +2,8 @@ package com.tool4us.chartx;
 
 import static com.tool4us.chartx.AppSetting.OPT;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -20,6 +22,8 @@ public enum AppResource
     
     private Map<String, String[]>   _itemCodes = new ConcurrentSkipListMap<String, String[]>();
     
+    private List<String>    _bpList = null;
+    
     
     private AppResource()
     {
@@ -30,6 +34,12 @@ public enum AppResource
     {
         Logs.info("Application Resource Loading...");
         
+        loadCodes();
+        loadBuyPoint();
+    }
+    
+    public void loadCodes()
+    {   
         String codesFile = OPT.getCodesFile();
         
         TextFileLineReader in = null;
@@ -37,8 +47,6 @@ public enum AppResource
         try
         {
             Map<String, String[]> itemMap = new ConcurrentSkipListMap<String, String[]>();
-            
-            System.out.println(codesFile);
             
             in = new TextFileLineReader(codesFile, "UTF-8");
             String lineText = in.getNextLine(); // 제목
@@ -64,6 +72,58 @@ public enum AppResource
             if( in != null )
                 in.close();
         }
+    }
+    
+    public void loadBuyPoint()
+    {   
+        String bpFile = OPT.getBuyPointFile();
+        
+        TextFileLineReader in = null;
+        
+        try
+        {
+            List<String> itemList = new ArrayList<String>();
+            
+            in = new TextFileLineReader(bpFile, "UTF-8");
+            String lineText = in.getNextLine(); // 제목
+            
+            lineText = in.getNextLine();
+            while( lineText != null )
+            {
+                String[] ar = UsefulTool.SplitLineText(lineText, "\t", false, true);
+                
+                itemList.add(ar[0]);
+                
+                lineText = in.getNextLine();
+            }
+            
+            _bpList = itemList;
+        }
+        catch( Exception xe )
+        {
+            Logs.trace(xe);
+        }
+        finally
+        {
+            if( in != null )
+                in.close();
+        }
+    }
+    
+    // 반환값: 단축코드(0), 표준코드, 한글 종목명(2), 한글 종목약명, 영문명, 상장일(5), 시장구분, 증권구분, 소속부, 주식종류, 액면가(10), 상장주식수, 업종(12)
+    public String[] getCodeDetail(String code)
+    {
+        return _itemCodes.get(code);
+    }
+    
+    public String getCodeTitle(String code)
+    {
+        if( code.endsWith("B") )
+            code = code.substring(0, code.length() - 1);
+        
+        String[] compInfo = getCodeDetail(code);
+        
+        return compInfo[3] + " (" + code + ")";
     }
     
     public String getCodesAsJSON()
@@ -100,6 +160,11 @@ public enum AppResource
         
         
         return sb.toString();
+    }
+    
+    public List<String> getBuyPointCodes()
+    {
+        return _bpList;
     }
     
 }

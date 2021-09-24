@@ -64,12 +64,43 @@ class AppData {
   }
 
   setCompCode = (code) => {
-    this.compCode = code;
+    this._compCode = code;
 
+    if( 'guessBP' === code ) {
+      this.getBuyPointData();
+    } else {
+      this.getChartDataByCode(this._compCode);
+    }
+  }
+
+  getChartDataByCode = (code) => {
     // apiProxy.getYearlyData(code,
     apiProxy.getCountedData(code, 450,
       (res) => {
-        // console.log('APPDATA OK', res);
+        console.log('APPDATA OK', res);
+        if( 0 === res.returnCode ) {
+          const { data, chart, colorMap, extentY1, extentY2 } = res.response;
+
+          this._dataList = data;
+          this._chart = chart;
+          this._dataExtentY = [ extentY1, extentY2 ];
+          this._userExtentY = cp([ extentY1, extentY2 ]);
+          this._colorMap = colorMap;
+
+          this.pulseEvent('data changed');
+        }
+      },
+      (err) => {
+        console.log('APPDATA ERR', err);
+        // TODO 예외 처리
+      }
+    );
+  }
+
+  getBuyPointData = () => {
+    apiProxy.getBuyPointData(
+      (res) => {
+        console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
           const { data, chart, colorMap, extentY1, extentY2 } = res.response;
 

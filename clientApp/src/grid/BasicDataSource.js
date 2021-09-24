@@ -24,6 +24,7 @@ class BasicDataSource {
   constructor (props) {
     this.resetData(props);
 
+    this.title = props.title;
     this._modifiedTime = tickCount();
     this._filterMap = {};
     this._evHandler = null;

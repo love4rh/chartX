@@ -58,6 +58,23 @@ CHAIN/PLUS: 양의 값을 갖는 (상승세인) SLOPE/SMOOTH의 누적합.
 MV/20: 20일 이동평균
 MV/60: 60일 이동평균
 
+
+## PT/20 (Point Type in MV20)
+0: N/A
+3: 위쪽 볼록 변곡점. 하락 예상 (표시안함)
+4: 아래 볼록 변곡점. 상승 예상 (표시안함)
+5: 극격한 상승 (보라색)
+
+## PT2/20
+6: MV20과 MV60이 만나는 점. MV20 하락. 매도 여부 판단 (노란색, 표시안함)
+7: MV20과 MV60이 만나는 점. MV20 상승. (초록색)
+
+## SUGGEST
+PT/20를 이용하여 산출한 매수/매도 포인트 제안값
+1: 매수 제안 (빨간색)
+2: 매도 제안
+
+
 ## 매수로직 01
 
 ```
@@ -81,31 +98,54 @@ IIF( @ROWNUM = 1, 0,
 
 2주 내 MV20이 MV60 이하이면
 
-<?xml version="1.0" encoding="UTF-8"?>
 
-<processingElem type="derived">
-	<dataSource alias="A1"><![CDATA[SORTBYBASE]]></dataSource>
-	<dataGroupName><![CDATA[ADD_DF]]></dataGroupName>
-	<ui>
-		<position x="479" y="345" />
-		<description><![CDATA[]]></description>
-	</ui>
-	<addColumns>
-		<derivedColumn name="DX"><![CDATA[@ROWNUM * 0.1]]></derivedColumn>
-		<derivedColumn name="RPRICE"><![CDATA[IIF( @ROWNUM = 1, (A := {LAST_P}) / {LAST_P}, {LAST_P} / A )]]></derivedColumn>
-		<derivedColumn name="MV/RP"><![CDATA[MOVINGAVG(@{RPRICE}, MIN(2, @ROWNUM))]]></derivedColumn>
-		<derivedColumn name="MV/LP"><![CDATA[MOVINGAVG( @{LAST_P}, MIN(2, @ROWNUM) )]]></derivedColumn>
-		<derivedColumn name="SLOPE/MV"><![CDATA[IIF(@ROWNUM < 5, 0, LINEARSLOPE(@{DX}, @{MV/RP}, 5))]]></derivedColumn>
-		<derivedColumn name="CLINE"><![CDATA[IIF( @ROWNUM = 1, {SLOPE/MV}, GETVALUE(@THIS, -1) + {SLOPE/MV} )]]></derivedColumn>
-		<derivedColumn name="SMOOTH/FACTOR"><![CDATA[SQRT(MOVINGVAR(@{SLOPE/MV}, 20)) * 0.8]]></derivedColumn>
-		<derivedColumn name="SLOPE/SMOOTH"><![CDATA[IIF( ISBETWEEN({SLOPE/MV}, -{SMOOTH/FACTOR}, {SMOOTH/FACTOR}), 0, {SLOPE/MV} )]]></derivedColumn>
-		<derivedColumn name="CLINE/SMOOTH"><![CDATA[IIF( @ROWNUM = 1, {SLOPE/SMOOTH}, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH} )]]></derivedColumn>
-		<derivedColumn name="CHAIN/PLUS"><![CDATA[IIF( @ROWNUM < 2, 0,
-  IIF( {SLOPE/SMOOTH} >= 0, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH}, 0 )
-)]]></derivedColumn>
-		<derivedColumn name="CHAIN/MINUS"><![CDATA[IIF( @ROWNUM < 2, 0,
-  IIF( {SLOPE/SMOOTH} <= 0, GETVALUE(@THIS, -1) + {SLOPE/SMOOTH}, 0 )
-)]]></derivedColumn>
-		<derivedColumn name="CHAIN/VAL"><![CDATA[{CHAIN/PLUS} + {CHAIN/MINUS}]]></derivedColumn>
-	</addColumns>
-</processingElem>
+IIF( @ROWNUM < 120, 0,
+   IIF( {RATIO/MAX} <= 0.77
+        AND 1 < {RATIO/MIN} AND {RATIO/MIN} <= 1.14
+        AND {MV/20} / {MV/60} > 0.9
+        AND ({STD/60} < 4 OR {AVG/60} <= {MV/60})
+        AND {SLOPE/20} >= -0.0001
+        AND MOVINGSUM(@THIS, 25) = 0,
+   IIF( {UP/DOWN}[-1] = 0 AND {UP/DOWN} >= 0.5
+        AND MOVINGSUM(@{UP/DOWN}, 11) <= IIF({UP/DOWN} = 1, 1, 0.5)
+      , 1,
+   IIF( {UP/DOWN}[-1] = 0.5 AND {UP/DOWN} >= 1
+        AND MOVINGSUM(@{UP/DOWN}, 11) <= 6
+      , 1, 0
+   )), 0 )
+)
+
+
+
+IIF( @ROWNUM < 12, 0,
+   IIF( MOVINGSUM(@THIS, 25) = 0 AND {STD/20} < 1.125,
+      CASE( 0
+         , ({HL/20}[-1] + {HL/20}) / 2 <= 0.991
+           AND {HL/20} <= 0.985 AND {HL/RATIO} >= 1.0
+           AND {AVG/S20} <= 4.2 AND {MV/20} < {MV/120}, 4
+         , ({HL/20}[-1] + {HL/20}) / 2 >= 1.009 AND {MV/20} > {MV/120}, 3
+      ),
+      CASE( 0
+         , MOVINGMORECOUNT(@THIS, 45, 4) = 0 AND {STD/20} > 10 AND {HL/20} > 1, 5
+         , {MV/20}[-1] >= {MV/60}[-1] AND {MV/20} <= {MV/60}, 6
+         , {MV/20}[-1] <= {MV/60}[-1] AND {MV/20} >= {MV/60}, 7
+      )
+   )
+)
+
+
+IIF( @ROWNUM < 130, 0,
+   CASE( GETVALUE(@THIS, -1)
+       , {PT/20} = 4, 4
+       , GETVALUE(@THIS, -1) = 4 AND {HL/20} >= 1.0, 10
+       , GETVALUE(@THIS, -1) >= 12, 20
+       , GETVALUE(@THIS, -1) >= 10 AND {PT/20} = 3, GETVALUE(@THIS, -1) + 1
+       , GETVALUE(@THIS, -1) >= 10 AND {PT/20} = 5, 20
+   )
+)
+
+
+IIF( @ROWNUM < 120, 0,
+   IIF( {PT2/20} = 7 AND ({HL/60} >= 1.0 OR {HL/120} >= 1.0)
+      , 1, 0 )
+)

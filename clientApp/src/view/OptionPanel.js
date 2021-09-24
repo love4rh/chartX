@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { makeid } from '../util/tool.js';
+import { makeid, isundef } from '../util/tool.js';
 import { RiCheckboxBlankLine, RiCheckboxLine } from 'react-icons/ri';
 
 import { RangeSlider, sliderSize } from '../component/RangeSlider.js';
@@ -80,6 +80,10 @@ class OptionPanel extends Component {
           <span>&nbsp;Y축 범위 동일하게 적용</span>
         </div>
         { yLabel.map((t, i) => {
+            if( isundef(dataExtent[i]) ) {
+              return null;
+            }
+
             return (
               <div key={`sliderTxt-${i}`}>
                 <div className="optionLabel" style={{ marginTop:`${i === 0 ? 20 : 55}px` }}>{t}</div>

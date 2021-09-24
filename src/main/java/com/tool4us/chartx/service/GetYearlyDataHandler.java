@@ -36,10 +36,8 @@ public class GetYearlyDataHandler extends ApiHandler
     {
         String authCode = req.getHeaderValue("x-auth-code");
         
-        if( emptyCheck(authCode) )
+        if( !OPT.checkAuthCode(authCode) )
             return makeResponseJson(ApiError.InvalidAuthCode);
-        
-        // TODO authCode 검증 로직 추가
 
         String pCode = req.getParameter("pCode");
         
