@@ -19,13 +19,14 @@ import './MainFrame.scss';
 
 class MainFrame extends Component {
   static propTypes = {
+    method: PropTypes.string,
     compCode: PropTypes.string
   };
 
   constructor (props) {
     super(props);
 
-    const { compCode } = props;
+    const { method, compCode } = props;
 
     this.state = {
       pageType: 'main', // entry, main,
@@ -33,7 +34,7 @@ class MainFrame extends Component {
       waiting: false,
       menuShown: false,
       redrawCount: 0,
-      appData: new AppData({ compCode })
+      appData: new AppData({ method, compCode })
     };
 
     this.handleUnload = this.handleUnload.bind(this);

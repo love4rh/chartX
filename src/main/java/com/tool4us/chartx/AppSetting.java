@@ -211,4 +211,9 @@ public enum AppSetting
     {
         return _options.getAsString("resource/guessBPFile");
     }
+    
+    public String getColorMap()
+    {
+        return _options.getAsObject("chart/colorMap").toString();
+    }
 }

@@ -5,6 +5,7 @@ import static com.tool4us.chartx.AppResource.RES;
 import static com.tool4us.common.Util.UT;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -34,13 +35,27 @@ public class GetBuyPointHandler extends ApiHandler
         
         if( !OPT.checkAuthCode(authCode) )
             return makeResponseJson(ApiError.InvalidAuthCode);
+        
+        String pageStr = req.getParameter("pageNo");
+        String countInPage = req.getParameter("count");
+        String dpCount = req.getParameter("displyCount");
+        
+        int pageNo = pageStr == null || pageStr.isEmpty() ? 0 : Integer.parseInt(pageStr);
+        int count = countInPage == null || countInPage.isEmpty() ? 10 : Integer.parseInt(countInPage);
+        int shownCount = dpCount == null || dpCount.isEmpty() ? 350 : Integer.parseInt(dpCount);
+        
+        List<String> codes = RES.getBuyPointCodes();
+        
+        int totalPage = codes.size() / count + (0 != (codes.size() % count) ? 1 : 0); 
 
         // 데이터 가져오기
         StringBuilder sb = new StringBuilder();
         
         sb.append("{");
+        
+        sb.append("\"page\":").append(pageNo).append(",\"total\":").append(totalPage);
 
-        sb.append("\"chart\":{ \"X\": ").append(_xColumn)
+        sb.append(", \"chart\":{ \"X\": ").append(_xColumn)
           .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]");
         
         if( _yList[1] != null )
@@ -49,20 +64,9 @@ public class GetBuyPointHandler extends ApiHandler
         }
         
         sb.append("}");
-
+        
         // Data Column Index --> Color
-        sb.append(", \"colorMap\": {")
-          .append("\"2\": \"#4e79a7\", ")
-          .append("\"3\": \"#e15759\", ")
-          .append("\"4\": \"#59a14f\", ")
-          .append("\"5\": \"#edc949\", ")
-          .append("\"6\": \"#f28e2c\", ")
-          .append("\"7\": \"#76b7b2\", ")
-          .append("\"8\": \"#af7aa1\", ")
-          .append("\"9\": \"#ff9da7\", ")
-          .append("\"10\": \"#9c755f\", ")
-          .append("\"11\": \"#bab0ab\" }")
-        ;
+        sb.append(", \"colorMap\":").append(OPT.getColorMap());
 
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
         sb.append(", \"data\":[");
@@ -70,9 +74,13 @@ public class GetBuyPointHandler extends ApiHandler
         boolean assigned = false;
         Map<Integer, double[]> extentMap = new TreeMap<Integer, double[]>();
         
-        for(String pCode : RES.getBuyPointCodes())
+        for(int i = pageNo * count; i < pageNo * count + count; ++i)
         {
-            String pathName = OPT.dataFolder() + File.separator + "P" + pCode + "B.pmd";
+            if( i >= codes.size() )
+                break;
+            
+            String pCode = codes.get(i);
+            String pathName = OPT.dataFolder() + File.separator + "P" + pCode + ".pmd";
             
             File f = new File(pathName);
             if( !f.exists() )
@@ -83,9 +91,9 @@ public class GetBuyPointHandler extends ApiHandler
             if( ds == null )
                 continue;
             
-            long dataCount = ds.getRowSize();
+            long dataCount = Math.min(shownCount,  ds.getRowSize());
 
-            String dataBlock = ChartTool.makeDataBlock(RES.getCodeTitle(pCode), 0, dataCount, ds, extentMap);
+            String dataBlock = ChartTool.makeDataBlock(RES.getCodeTitle(pCode), ds.getRowSize() - dataCount, ds.getRowSize(), ds, extentMap);
 
             if( dataBlock != null )
             {
@@ -101,43 +109,10 @@ public class GetBuyPointHandler extends ApiHandler
         sb.append("]");
         
         // Extent Value
-        if( !extentMap.isEmpty() )
-        {
-            for(int j = 1; j <= 2; ++j)
-            {
-                int[] list = _yList[j - 1];
-                
-                if( list == null )
-                    continue;
-
-                double[] minMax = null;;
-                for(int i = 0; i < list.length; ++i)
-                {
-                    double[] mm = extentMap.get(list[i]);
-                    if( mm == null )
-                        continue;
-                    
-                    if( minMax == null )
-                        minMax = mm;
-                    else
-                    {
-                        minMax[0] = Math.min(minMax[0], mm[0]);
-                        minMax[1] = Math.max(minMax[1], mm[1]);
-                    }
-                }
-                
-                if( minMax != null )
-                {
-                    sb.append(", \"extentY").append(j).append("\":[")
-                        .append(minMax[0]).append(", ").append(minMax[1]).append("]");
-                }
-            }
-        }
+        ChartTool.attachExtent(sb, extentMap);
 
         sb.append("}");
         
         return makeResponseJson(sb.toString());
     }
-    
-    
 }

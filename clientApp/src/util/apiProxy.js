@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-import { makeid, isvalid } from '../util/tool.js';
+import { makeid, isvalid, isundef } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
-// export const _serverBaseUrl_ = 'http://stock.tool4.us';
-export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
+export const _serverBaseUrl_ = 'http://stock.tool4.us';
+// export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
 
@@ -52,16 +52,17 @@ const apiProxy = {
 			});
 	},
 
-	getBuyPointData: (cbOk, cbErr) => {
+	getBuyPointData: (page, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
-		axios.get(`${_serverBaseUrl_}/gbp`, {
+		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}`, {
 			headers: {
 				'Content-Type': 'application/json;charset=utf-8',
 				'x-user-token': _userToken,
 				'x-auth-code': `auth code here`
 			}
 		}).then(res => {
+			console.log('CHECK - BP', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {

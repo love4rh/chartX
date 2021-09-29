@@ -63,18 +63,7 @@ public class GetCountedDataHandler extends ApiHandler
         sb.append("}");
 
         // Data Column Index --> Color
-        sb.append(", \"colorMap\": {")
-          .append("\"2\": \"#4e79a7\", ")
-          .append("\"3\": \"#e15759\", ")
-          .append("\"4\": \"#59a14f\", ")
-          .append("\"5\": \"#edc949\", ")
-          .append("\"6\": \"#f28e2c\", ")
-          .append("\"7\": \"#76b7b2\", ")
-          .append("\"8\": \"#af7aa1\", ")
-          .append("\"9\": \"#ff9da7\", ")
-          .append("\"10\": \"#9c755f\", ")
-          .append("\"11\": \"#bab0ab\" }")
-        ;
+        sb.append(", \"colorMap\": ").append(OPT.getColorMap());
 
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
         sb.append(", \"data\":[");
@@ -103,41 +92,9 @@ public class GetCountedDataHandler extends ApiHandler
         sb.append("]");
         
         // Extent Value
-        if( !extentMap.isEmpty() )
-        {
-            for(int j = 1; j <= 2; ++j)
-            {
-                int[] list = _yList[j - 1];
-                
-                if( list == null )
-                    continue;
-
-                double[] minMax = null;;
-                for(int i = 0; i < list.length; ++i)
-                {
-                    double[] mm = extentMap.get(list[i]);
-                    if( mm == null )
-                        continue;
-                    
-                    if( minMax == null )
-                        minMax = mm;
-                    else
-                    {
-                        minMax[0] = Math.min(minMax[0], mm[0]);
-                        minMax[1] = Math.max(minMax[1], mm[1]);
-                    }
-                }
-                
-                if( minMax != null )
-                {
-                    sb.append(", \"extentY").append(j).append("\":[")
-                        .append(minMax[0]).append(", ").append(minMax[1]).append("]");
-                }
-            }
-        }
+        ChartTool.attachExtent(sb, extentMap);
 
         sb.append("}");
-        
         ds.close();
         
         return makeResponseJson(sb.toString());

@@ -28,6 +28,48 @@ public class ChartTool
         return _markerColor[(idx - 1) % _markerColor.length];
     }
     
+    public static boolean attachExtent(StringBuilder sb, Map<Integer, double[]> extentMap)
+    {
+        if( extentMap.isEmpty() )
+        {
+            return false;
+        }
+        
+        int[][] yList = OPT.getChartY();
+
+        for(int j = 1; j <= 2; ++j)
+        {
+            int[] list = yList[j - 1];
+            
+            if( list == null )
+                continue;
+
+            double[] minMax = null;;
+            for(int i = 0; i < list.length; ++i)
+            {
+                double[] mm = extentMap.get(list[i]);
+                if( mm == null )
+                    continue;
+                
+                if( minMax == null )
+                    minMax = mm;
+                else
+                {
+                    minMax[0] = Math.min(minMax[0], mm[0]);
+                    minMax[1] = Math.max(minMax[1], mm[1]);
+                }
+            }
+            
+            if( minMax != null )
+            {
+                sb.append(", \"extentY").append(j).append("\":[")
+                    .append(minMax[0]).append(", ").append(minMax[1]).append("]");
+            }
+        }
+        
+        return true;
+    }
+    
     public static String makeDataBlock( String title, long startRow, long endRow, FileMapStore ds
                                       , Map<Integer, double[]> extentMap ) throws Exception
     {
@@ -152,5 +194,54 @@ public class ChartTool
         sb.append("}");
         
         return sb.toString();
+    }
+    
+    
+    public static int attachAnnualDataBlock( StringBuilder sb, String title, FileMapStore ds, Map<Integer, double[]> extentMap ) throws Exception
+    {
+        int count = 0;
+        long bi = -1;
+        boolean assigned = false;
+        String year = null;
+        
+        for(long r = 0; r < ds.getRowSize(); ++r)
+        {
+            String dt = (String) ds.getCell(0, r);
+            
+            if( dt == null )
+                continue;
+            
+            dt = dt.substring(0, 4);
+            
+            if( year == null )
+            {
+                year = dt;
+                bi = r;
+            }
+            
+            if( !dt.equals(year) )
+            {
+                if( assigned )
+                    sb.append(",");
+                
+                sb.append( makeDataBlock(title + " @" + year, bi, r, ds, extentMap) );
+                assigned = true;
+                count += 1;
+
+                bi = r;
+                year = dt;
+            }
+        }
+        
+        if( bi != -1 )
+        {
+            if( assigned )
+                sb.append(",");
+            
+            sb.append( makeDataBlock(title + " @" + year, bi, ds.getRowSize(), ds, extentMap) );
+            count += 1;
+        }
+        
+        return count;
     }
 }

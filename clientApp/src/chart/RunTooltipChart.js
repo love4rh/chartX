@@ -65,7 +65,7 @@ class RunTooltipChart extends Component {
       chartDiv: React.createRef(),
       data: { dataSize, xLabel, xData, dateTimeAxis, extentX, yData, extentY1:extentY[0], extentY2:extentY[1] },
       useY2,
-      margin: { LEFT: 70, RIGHT: 70, TOP: 5, BOTTOM: 70 },
+      margin: { LEFT: 70, RIGHT: (useY2 ? 70 : 10), TOP: 5, BOTTOM: 70 },
       canvasWidth: width - (withYSlider ? (sliderSize + (useY2 ? sliderSize : 0)) : 0),
       canvasHeight: height - (withSlider ? sliderSize : 0) - (withLegend ? 36 : 0),
       chartElement: {},
@@ -78,7 +78,6 @@ class RunTooltipChart extends Component {
       markerData
     };
 
-    this.hideTimeOut = null;
     // console.log('RunChart construct', this.state);
   }
   
@@ -211,15 +210,15 @@ class RunTooltipChart extends Component {
 
   updateD3Chart = () => {
     const {
-      canvasWidth, canvasHeight,
-      compID, margin, data, chartElement,
+      chartDiv, canvasWidth, canvasHeight,
+      compID, margin, data, chartElement, useY2,
       userXExtent, userY1Extent, userY2Extent, markerData
     } = this.state;
 
     const { bisectDate, axisX, axesY } = chartElement;
 
     // xData가 null이면 data index임. xData가 null이 아니고 dateTimeAxis가 false이면 label임.
-    const { dateTimeAxis, dataSize, xData, extentX, yData, extentY1, extentY2 } = data;
+    const { dateTimeAxis, dataSize, xData, extentX, yData, extentY1, extentY2, xLabel } = data;
 
     const WIDTH = canvasWidth - margin.LEFT - margin.RIGHT;
     const HEIGHT = canvasHeight - margin.TOP - margin.BOTTOM;
@@ -318,7 +317,7 @@ class RunTooltipChart extends Component {
 
     let axisTipY2 = null;
 
-    if( isvalid(axesY[1]) ) {
+    if( useY2 ) { // Y2 축을 사용한다면
       axisTipY2 = g.append('g')
         .classed(guideID, true).classed(compID + '_tipY2', true)
         .style('display', 'none');
@@ -338,7 +337,7 @@ class RunTooltipChart extends Component {
     }
 
     // Mouse Over시 Tooltip / Guide Line 처리
-    const cbShowToolTip = (ev) => {
+    const cbGuiderShown = (ev) => {
       let dataIdx = 0;
       const x0 = xScaler.invert(ev.offsetX - margin.LEFT);
 
@@ -372,8 +371,33 @@ class RunTooltipChart extends Component {
         axisTipY2.attr('transform', `translate(${WIDTH}, ${ev.offsetY - margin.TOP - 12})`);
         axisTipY2.select('.axis-tip-x').text(`${y2Val}`);
       }
+    } // end of callback for showing tooptip
 
-      /*
+
+    let mouseDown = false;
+
+    // 마우스 클릭시 나타날 툴팁
+    const tooltipDivID = compID + '_tooltip';
+    const chartTag = chartDiv.current;
+    const tooltipBox = d3.select(chartTag)
+      .append('div').classed(guideID, true)
+      .classed('chartToolTip', true).classed(tooltipDivID, true)
+      .style('display', 'none');
+
+    // Mouse Down 처리용 핸들러
+    const cbTooltipShown = (ev) => {
+      let dataIdx = 0;
+      const x0 = xScaler.invert(ev.offsetX - margin.LEFT);
+
+      // 날짜 축인 경우
+      if( dateTimeAxis ) {
+        dataIdx = bisectDate(xData, x0, 1);
+        const v0 = xData[dataIdx - 1], v1 = xData[dataIdx];
+        if( !v0 || !v1 ) { return; }
+      } else {
+        dataIdx = Math.max(0, Math.min(Math.round(x0) - 1, dataSize - 1));
+      }
+
       // Tooltip box
       tooltipBox.html(''); // 기존 툴팁 삭제
 
@@ -386,7 +410,6 @@ class RunTooltipChart extends Component {
           .classed('tooltipItem', true)
           .style('color', dd.color)
           .text(`${dd.title}: ${numberWithCommas(Math.round(dd.data[dataIdx] * 10000) / 10000)}`);
-
         return true;
       });
 
@@ -397,11 +420,9 @@ class RunTooltipChart extends Component {
       const pX = ev.clientX + guideBoxWidth + margin.LEFT > maxX ? ev.clientX - guideBoxWidth + 5 : ev.clientX + 10;
       const pY = ev.clientY + guideBoxHeight + margin.BOTTOM > maxY ? ev.clientY - guideBoxHeight + 10 : ev.clientY + 10;
 
-      tooltipBox.attr('style', `left: ${pX}px; top: ${pY}px;`); // */
-
-      // toolBoxX.text(`${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1})`);
-      // toolBoxX.attr('style', `left: ${pX - chartTag.offsetLeft}px; top: ${-100}px;`);
-    }; // end of callback for showing tooptip
+      tooltipBox.attr('style', `left: ${pX}px; top: ${pY}px;`);
+      tooltipBox.style('display', null);
+    }
 
     g.append('rect').classed(guideID, true)
       .classed('overlay', true).classed(overlayDivID, true)
@@ -413,8 +434,15 @@ class RunTooltipChart extends Component {
           tipElements.map(e => e.style('display', 'none'));
         }
       })
-      .on('mousemove', cbShowToolTip);
-    // end of overlay
+      .on('mousemove', (ev) => {
+        cbGuiderShown(ev);
+        if( mouseDown ) {
+          cbTooltipShown(ev);
+        }
+      })
+      .on('mousedown', () => mouseDown = true )
+      .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
+    ;// end of overlay
 
     const clipBoxID = compID + '_clip';
 
@@ -442,6 +470,8 @@ class RunTooltipChart extends Component {
         .classed(lineID, true)
         .on('mouseover', () => d3.select('.' + lineID).classed('selectedLine', true) )
         .on('mouseout',  () => d3.select('.' + lineID).classed('selectedLine', false) )
+        .on('mousedown', () => mouseDown = true )
+        .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
         .attr('fill', 'none')
         .attr('stroke', dd.color)
         .attr('stroke-width', '2px')
@@ -475,6 +505,8 @@ class RunTooltipChart extends Component {
             .attr('fill', md.color)
             .attr('stroke', 'black')
             .attr('stroke-width', '1')
+            .on('mousedown', () => mouseDown = true )
+            .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
           ;
           return true;
         });

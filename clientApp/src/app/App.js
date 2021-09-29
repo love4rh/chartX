@@ -4,13 +4,17 @@ import './App.css';
 
 function App() {
   const url = window.location.href;
-  const code = url.substring(url.lastIndexOf('/') + 1);
+  const path = url.substring(url.indexOf('/', 10) + 1);
+  const params = path.split('/');
 
-  // console.log('url', url);
+  const code = params.length > 1 ? params[params.length - 1] : '';
+  const method = params[0] === '' ? 'count' : params[0];
+
+  console.log('call', method, code);
 
   return (
     <div className="App">
-      <MainFrame appTitle="Chart X" compCode={code} />
+      <MainFrame appTitle="Chart X" method={method} compCode={code} />
     </div>
   );
 }

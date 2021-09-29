@@ -63,7 +63,7 @@ public class AppServer implements IStaticFileMap
     public boolean isAllowed(String uriPath)
     {
         // 소스 보안을 위하여 *.map 파일은 반환하지 않음.
-        return !uriPath.endsWith(".map");
+        return true; // !uriPath.endsWith(".map");
     }
 
     @Override
@@ -86,32 +86,11 @@ public class AppServer implements IStaticFileMap
         else
         {
             vDir = OPT.virtualRoot();
-
-            String pCode = uriPath.substring(1);
             
-            // pCode가 특수한 경우라면
-            if( "guessBP".equals(pCode) )
+            // 파일을 요청하는 경우가 아니라면 루트를 반환함
+            if( -1 == uriPath.indexOf(".", uriPath.length() - 7) )
             {
                 uriPath = "/" + getRootFile();
-            }
-            else if( pCode != null && !pCode.isEmpty() )
-            {
-            	if( pCode.length() == 7 && pCode.endsWith("B") )
-            	{
-            		pCode = pCode.substring(0, 6);
-            	}
-            	
-            	if( pCode.length() == 6 )
-            	{
-            		boolean allDigit = true;
-            		for(int i = 0; allDigit && i < pCode.length(); ++i)
-            		{
-            			allDigit = Character.isDigit(pCode.charAt(i));
-            		}
-			     
-            		if( allDigit )
-            			uriPath = "/" + getRootFile();
-            	}
             }
         }
         

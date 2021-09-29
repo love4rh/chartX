@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<crawlegoProject version="1.0">
+	<settings>
+		<params>
+		</params>
+	</settings>
+
+
+
+	<inputNodes>
+		<inputNode name="FileInput_1" type="FILE">
+			<path><![CDATA[D:\EclipseData\Andromeda\chartX\doc\R-210924.md]]></path>
+			<params>
+				<param name="delimiter"><![CDATA[Pipe(|)]]></param>
+			</params>
+			<columns>
+				<column name="종목" type="string" />
+				<column name="분석" type="string" />
+				<column name="매수가" type="real" />
+				<column name="매도가" type="real" />
+			</columns>
+			<ui>
+				<position x="90" y="88" />
+				<description><![CDATA[]]></description>
+			</ui>
+		</inputNode>
+	</inputNodes>
+
+
+	<dataProcessing>
+		<processingElem type="derived">
+			<dataSource alias="A1"><![CDATA[FileInput_1]]></dataSource>
+			<dataGroupName><![CDATA[Derived_1]]></dataGroupName>
+			<ui>
+				<position x="199" y="91" />
+				<description><![CDATA[]]></description>
+			</ui>
+			<addColumns>
+				<derivedColumn name="P_CODE"><![CDATA[SUBSTR({종목}, FIND({종목}, '(') + 1, FIND({종목}, ')') - 1 )]]></derivedColumn>
+				<derivedColumn name="NAME"><![CDATA[SUBSTR({종목}, 1, FIND({종목}, '(') - 2)]]></derivedColumn>
+			</addColumns>
+		</processingElem>
+
+		<processingElem type="orderAndFilter">
+			<dataSource alias="A1"><![CDATA[Derived_1]]></dataSource>
+			<dataGroupName><![CDATA[ColumnOperator_1]]></dataGroupName>
+			<ui>
+				<position x="312" y="184" />
+				<description><![CDATA[]]></description>
+			</ui>
+			<orderAndFilter>
+				<column>NAME</column>
+				<column>P_CODE</column>
+				<column toName="COMMENT">분석</column>
+				<column toName="BP">매수가</column>
+				<column toName="SP">매도가</column>
+			</orderAndFilter>
+		</processingElem>
+	</dataProcessing>
+</crawlegoProject>

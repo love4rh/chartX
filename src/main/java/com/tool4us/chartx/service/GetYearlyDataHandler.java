@@ -1,5 +1,6 @@
 package com.tool4us.chartx.service;
 
+import static com.tool4us.chartx.AppResource.RES;
 import static com.tool4us.chartx.AppSetting.OPT;
 import static com.tool4us.common.Util.UT;
 
@@ -10,9 +11,9 @@ import java.util.TreeMap;
 import com.tool4us.net.http.TomyRequestor;
 import com.tool4us.net.http.TomyResponse;
 
-import lib.turbok.common.ValueType;
 import lib.turbok.data.FileMapStore;
 
+import com.tool4us.chartx.util.ChartTool;
 import com.tool4us.net.http.ApiError;
 import com.tool4us.net.http.ApiHandler;
 import com.tool4us.net.http.TomyApi;
@@ -21,24 +22,18 @@ import com.tool4us.net.http.TomyApi;
 
 @TomyApi(paths={ "/ytx" })
 public class GetYearlyDataHandler extends ApiHandler
-{
-    static String[] years = new String[] { "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021" };
-    
-    static int _xColumn     = 0;
-    static int _buyPosIdx   = 1; // 구매 가능성 컬럼
-    
-    static int[][] _yList   = { { 2, 3, 4 }, { 5, 6, 7 } }; // 반환하는 데이터의 인덱스 (아래 _fetchColumns에 정의한 순서임).
-    static int[] _fetchColumns = { 0, 1, 2, 3, 4, 5, 6, 7 }; // 반환할 데이터 컬럼 인덱스. 순서대로 반환됨.
-    
-    
+{     
     @Override
     public String call(TomyRequestor req, TomyResponse res) throws Exception
     {
+        int _xColumn = OPT.getChartX();
+        int[][] _yList = OPT.getChartY();
+        
         String authCode = req.getHeaderValue("x-auth-code");
         
         if( !OPT.checkAuthCode(authCode) )
             return makeResponseJson(ApiError.InvalidAuthCode);
-
+        
         String pCode = req.getParameter("pCode");
         
         if( emptyCheck(pCode ) )
@@ -56,206 +51,34 @@ public class GetYearlyDataHandler extends ApiHandler
         sb.append("{");
 
         sb.append("\"chart\":{ \"X\": ").append(_xColumn)
-            .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]")
-            .append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]")
-            .append("}");
+          .append(", \"Y1\":[").append(UT.textWithDelimiter(_yList[0])).append("]");
+        
+        if( _yList[1] != null )
+        {
+            sb.append(", \"Y2\":[").append(UT.textWithDelimiter(_yList[1])).append("]");
+        }
+        
+        sb.append("}");
         
         // Data Column Index --> Color
-        sb.append(", \"colorMap\": {")
-          .append("\"2\": \"#4e79a7\", ")
-          .append("\"3\": \"#f28e2c\", ")
-          .append("\"4\": \"#e15759\", ")
-          .append("\"5\": \"#76b7b2\", ")
-          .append("\"6\": \"#59a14f\", ")
-          .append("\"7\": \"#edc949\", ")
-          .append("\"8\": \"#af7aa1\", ")
-          .append("\"9\": \"#ff9da7\", ")
-          .append("\"10\": \"#9c755f\", ")
-          .append("\"11\": \"#bab0ab\" }")
-        ;
+        sb.append(", \"colorMap\":").append(OPT.getColorMap());
 
         // data --> title, columns( { name, type(string, number, datetime), data[] }), editable(false)
         sb.append(", \"data\":[");
         
         Map<Integer, double[]> extentMap = new TreeMap<Integer, double[]>();
         
-        boolean assigned = false;
-        for(int i = 0; i < years.length; ++i)
-        {
-            String dataBlock = this.makeDataBlock(years[i], ds, _xColumn, extentMap);
-
-            if( dataBlock != null )
-            {
-                if( assigned )
-                    sb.append(",");
-                
-                sb.append(dataBlock);
-                assigned = true;
-            }
-        }
+        ChartTool.attachAnnualDataBlock(sb, RES.getCodeTitle(pCode), ds, extentMap);
+        
         sb.append("]");
         
         // Extent Value
-        if( !extentMap.isEmpty() )
-        {
-            for(int j = 1; j <= 2; ++j)
-            {
-                int[] list = _yList[j - 1];
-
-                double[] minMax = null;;
-                for(int i = 0; i < list.length; ++i)
-                {
-                    double[] mm = extentMap.get(list[i]);
-                    if( mm == null )
-                        continue;
-                    
-                    if( minMax == null )
-                        minMax = mm;
-                    else
-                    {
-                        minMax[0] = Math.min(minMax[0], mm[0]);
-                        minMax[1] = Math.max(minMax[1], mm[1]);
-                    }
-                }
-                
-                if( minMax != null )
-                {
-                    sb.append(", \"extentY").append(j).append("\":[")
-                        .append(minMax[0]).append(", ").append(minMax[1]).append("]");
-                }
-            }
-        }
+        ChartTool.attachExtent(sb, extentMap);
 
         sb.append("}");
         
         ds.close();
         
         return makeResponseJson(sb.toString());
-    }
-    
-    private String makeDataBlock( String year, FileMapStore ds, int dateColumn
-                                , Map<Integer, double[]> extentMap ) throws Exception
-    {
-        long startRow = -1;
-        for(long r = 0; r < ds.getRowSize(); ++r)
-        {
-            String dStr = (String) ds.getCell(dateColumn, r);
-            if( dStr != null && dStr.startsWith(year) )
-            {
-                startRow = r;
-                break;
-            }
-        }
-        
-        if( startRow == -1 )
-            return null;
-
-        StringBuilder sb = new StringBuilder();
-        StringBuilder sbMarker = new StringBuilder();
-
-        sb.append("{");
-        
-        sb.append("\"title\":\"").append(year).append("\"");
-        sb.append(",\"columns\":[");
-        
-        boolean markerOn = false;
-        for(int i = 0; i < _fetchColumns.length; ++i)
-        {
-            if( i > 0 )
-                sb.append(",");
-            
-            int c = _fetchColumns[i];
-            
-            ValueType vt = ds.getColumnType(c);
-            String typeStr = "string";
-
-            double[] minMax = null;
-            
-            if( vt == ValueType.DateTime )
-                typeStr = "datetime";
-            else if( vt == ValueType.Integer || vt == ValueType.Real )
-            {
-                typeStr = "number";
-                minMax = extentMap.get(c);
-            }
-
-            sb.append("{ \"name\":\"").append(ds.getColumnName(c)).append("\"");
-            sb.append(", \"type\":\"").append(typeStr).append("\"");
-            sb.append(", \"data\":[");
-            
-            boolean assigned = false;
-            Object pv = null;
-            for(long r = startRow; r < ds.getRowSize(); ++r)
-            {
-                String dStr = (String) ds.getCell(dateColumn, r);
-
-                if( dStr == null || !dStr.startsWith(year) )
-                    break;
-                
-                if( c == 0)
-                {
-                    Double bFlag = (Double) ds.getCell(_buyPosIdx, r);
-                    if( bFlag > 0 )
-                    {
-                        if( markerOn )
-                            sbMarker.append(",");
-    
-                        sbMarker.append(r - startRow);
-                        markerOn = true;
-                    }
-                }
-                    
-                if( assigned )
-                    sb.append(",");
-                
-                Object v = ds.getCell(c, r);
-                
-                if( v == null )
-                {
-                    v = pv;
-                    System.out.println("null value found in (" + c + ", " + r + ")");
-                }
-
-                if( "number".equals(typeStr) || v == null )
-                {
-                    sb.append(v);
-
-                    if( minMax == null )
-                    {
-                        minMax = new double[] { (Double) v, (Double) v };
-                        extentMap.put(c, minMax);
-                    }
-                    else
-                    {
-                        minMax[0] = Math.min(minMax[0], (Double) v);
-                        minMax[1] = Math.max(minMax[1], (Double) v);
-                    }
-                }
-                else
-                    sb.append("\"").append(v).append("\"");
-                
-                pv = v;
-                assigned = true;
-            }
-
-            sb.append("]}");
-        }
-        
-        sb.append("]");
-        sb.append(",\"editable\":false");
-
-        if( markerOn )
-        {
-            sb.append(", \"marker\": [");
-            
-            sb.append("{ \"point\":[").append(sbMarker.toString()).append("]")
-              .append(", \"color\":\"red\" }");
-            
-            sb.append("]");
-        }
-
-        sb.append("}");
-        
-        return sb.toString();
     }
 }

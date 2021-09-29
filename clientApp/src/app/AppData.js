@@ -9,7 +9,7 @@ import { apiProxy } from '../util/apiProxy.js';
 
 class AppData {
   constructor (props) {
-    const { compCode } = props;
+    const { method, compCode } = props;
 
     this._handler = [];
     this._dataList = [];
@@ -21,8 +21,10 @@ class AppData {
     this._userExtentY = [null, null];
     this._dataExtentY = [[0, 100], [0, 100]];
 
-    if( isvalid(compCode) && compCode !== '' ) {
-      this.setCompCode(compCode);
+    if( (isvalid(method) && method !== '') || compCode !== 'sample' ) {
+      this.setFetchParams(method, compCode);
+    } else if( compCode === 'sample' ) {
+      this.getSampleData();
     }
   }
 
@@ -63,44 +65,52 @@ class AppData {
     return this._dataList[0];
   }
 
-  setCompCode = (code) => {
+  setFetchParams = (method, code) => {
+    this._method = method;
     this._compCode = code;
 
-    if( 'guessBP' === code ) {
+    if( 'guessBP' === method ) {
       this.getBuyPointData();
+    } else if( 'year' === method ) {
+      this.getAnnualDataByCode(this._compCode);
     } else {
       this.getChartDataByCode(this._compCode);
     }
   }
 
+  getAnnualDataByCode = (code) => {
+    apiProxy.getYearlyData(code, this.handleDataOK, this.handleDataError);
+  }
+
   getChartDataByCode = (code) => {
-    // apiProxy.getYearlyData(code,
-    apiProxy.getCountedData(code, 450,
-      (res) => {
-        console.log('APPDATA OK', res);
-        if( 0 === res.returnCode ) {
-          const { data, chart, colorMap, extentY1, extentY2 } = res.response;
+    apiProxy.getCountedData(code, 380, this.handleDataOK, this.handleDataError);
+  }
 
-          this._dataList = data;
-          this._chart = chart;
-          this._dataExtentY = [ extentY1, extentY2 ];
-          this._userExtentY = cp([ extentY1, extentY2 ]);
-          this._colorMap = colorMap;
+  handleDataOK = (res) => {
+    console.log('APPDATA OK', res);
+    if( 0 === res.returnCode ) {
+      const { data, chart, colorMap, extentY1, extentY2 } = res.response;
 
-          this.pulseEvent('data changed');
-        }
-      },
-      (err) => {
-        console.log('APPDATA ERR', err);
-        // TODO 예외 처리
-      }
-    );
+      this._dataList = data;
+      this._chart = chart;
+      this._dataExtentY = [ extentY1, extentY2 ];
+      this._userExtentY = cp([ extentY1, extentY2 ]);
+      this._colorMap = colorMap;
+
+      this.pulseEvent('data changed');
+    }
+  }
+
+  handleDataError = (err) => {
+    // TODO 예외 처리
+    console.log('APPDATA ERR', err);
   }
 
   getBuyPointData = () => {
-    apiProxy.getBuyPointData(
+    const page = isvalid(this._compCode) && this._compCode !== '' ? this._compCode : null;
+
+    apiProxy.getBuyPointData(page,
       (res) => {
-        console.log('APPDATA OK', res);
         if( 0 === res.returnCode ) {
           const { data, chart, colorMap, extentY1, extentY2 } = res.response;
 
