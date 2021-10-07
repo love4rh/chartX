@@ -6,27 +6,23 @@ import { RunTooltipChart } from '../chart/RunTooltipChart.js';
 
 import { makeid } from '../grid/common.js';
 
-import BasicDataSource from '../grid/BasicDataSource.js';
-
-import './AppFrame.scss';
+import './ChartFrame.scss';
 
 
 
-class AppFrame extends Component {
+class ChartFrame extends Component {
   static propTypes = {
-    appData: PropTypes.object.isRequired  // Application 전반에 걸쳐 사용되는 데이터 객체. redux 컨셉으로 사용할 객체임
+    appData: PropTypes.object.isRequired,  // Application 전반에 걸쳐 사용되는 데이터 객체. redux 컨셉으로 사용할 객체임
+    dataList: PropTypes.array.isRequired
   };
 
   constructor (props) {
     super(props);
 
-    const { appData } = this.props;
-
     this.state = {
       drawKey: makeid(8),
       clientWidth: 800,
       clientHeight: 400,
-      dataList: [ new BasicDataSource(appData.getSampleData()) ],
       zoomIndex: -1 // 확대된 차트 번호. -1이면 전체 표시
     };
 
@@ -34,9 +30,6 @@ class AppFrame extends Component {
   }
 
   componentDidMount() {
-    const { appData } = this.props;
-    appData.addEventListener(this.handleDataEvent);
-
     this.onResize();
     window.addEventListener('resize', this.onResize);
   }
@@ -47,29 +40,17 @@ class AppFrame extends Component {
 
   onResize = () => {
     const { clientWidth, clientHeight } = this._mainDiv.current;
-    console.log('AppFrame onResize', clientWidth, clientHeight, window.innerWidth, window.innerHeight );
+    // console.log('ChartFrame onResize', clientWidth, clientHeight, window.innerWidth, window.innerHeight );
     this.setState({ clientWidth, clientHeight });
-  }
-
-  // DataSource에 변경이 있을 경우 발생하는 이벤트 처리
-  handleDataEvent = (sender, evt) => {
-    const { appData } = this.props;
-
-    if( sender === 'appData' ) {
-      const sl = appData.getDataList();
-      this.setState({ drawKey: makeid(8), dataList: sl.map(d => new BasicDataSource(d)) });
-    } else {
-      this.setState({ drawKey: makeid(8) });
-    }
   }
 
   handleChartEvent = (idx) => (type, ev) => {
     // console.log('handleChartEvent', idx, type);
 
-    const { zoomIndex } = this.state;
+    // const { zoomIndex } = this.state;
 
     if( 'doubleClick' === type ) {
-      this.setState({ zoomIndex: (zoomIndex !== -1 ? -1 : idx) });
+      // this.setState({ zoomIndex: (zoomIndex !== -1 ? -1 : idx) });
     }
   }
 
@@ -97,29 +78,20 @@ class AppFrame extends Component {
   }
 
   render() {
-    const { clientWidth, clientHeight, dataList, zoomIndex } = this.state;
+    const { dataList } = this.props;
+    const { clientWidth, clientHeight } = this.state;
 
     const adjW = clientWidth - 4, adjH = clientHeight - 4;
-    const chW = Math.min(adjW, 900), chH = Math.min(adjH, 460); // 기본 크기
-
-    const cntW = Math.round(adjW / chW),
-          cntH = Math.round(adjH / chH);
-
-    const scrollOn = dataList.length > cntW * cntH;
-
-    const chartWidth = (adjW - (scrollOn ? 16 : 0)) / cntW;
-    const chartHeight = adjH / cntH - 2;
-
-    // console.log('chart dim', zoomIndex, adjW, adjH, { cntW, cntH, scrollOn, chartWidth, chartHeight });
+    const chartWidth = Math.min(adjW, 1130),
+      chartHeight = Math.min(adjH, 460); // 기본 크기
 
     return (
-      <div ref={this._mainDiv} className="appFrame">
-        { zoomIndex !== -1 && this.makeChartComponent(dataList[zoomIndex], zoomIndex, adjW, adjH) }
-        { zoomIndex === -1 && dataList.map((ds, i) => this.makeChartComponent(ds, i, chartWidth, chartHeight)) }
+      <div ref={this._mainDiv} className="chartFrame">
+        { dataList.map((ds, i) => this.makeChartComponent(ds, i, chartWidth, chartHeight)) }
       </div>
     );
   }
 }
 
-export default AppFrame;
-export { AppFrame };
+export default ChartFrame;
+export { ChartFrame };

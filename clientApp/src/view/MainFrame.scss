@@ -8,32 +8,57 @@
 
 .mainHeader {
 	height: $headerHeight;
-	background-color: $headerBGColor;
-	color: $headerFGColor;
+	background-color: white;
 	display: flex;
 	flex-direction: row;
-	padding: 0 10px;
+	border-bottom: 1px solid $basicColor;
+}
+
+.mainTitleBox {
+	position: relative;
+	color: $basicColor;
+	max-width: 1130px;
+	display: flex;
+	align-items: center;
 }
 
 .mainTitle {
 	margin: 0 4px;
-	display: flex;
-	align-items: center;
 	font-weight: bolder;
-	font-size: 1.2rem;	
-	flex: 1;
+	font-size: 1.5rem;	
+	line-height: 1.2rem;
+}
+
+.mainMiddle {
+	flex: 1 1;
+}
+
+.mainNaviBox {
+	display: flex;
+}
+
+.mainMenuSeparator {
+	width: 1px;
+	margin: 10px 1px;
+	background-color: lightgrey;
 }
 
 .mainMenuButton {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0 8px;
+	margin: 3px;
+	box-sizing: border-box;
 	cursor: pointer;
+	width: 44px;
+	height: 44px;
 }
 
 .mainMenuButton:hover {
-	background-color: $menuButtonBGColorOver;
+	border-radius: 3px;
+	// border: 1px solid $basicColor;
+	color: white;
+	background-color: $basicColor;
 }
 
 .mainMenuButtonDisabled {
@@ -173,23 +198,42 @@
 	transition: left 0.4s;
 }
 
-
-
-.optionPanel {
-	box-sizing: border-box;
-	height: 100%;
-	padding: 7px;
+.searchBarMain {
+	background-color: white;
 }
 
-.optionItem, .optionLabel {
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	height: 32px;
-	line-height: 24px;
+.searchBarInput {
+	outline: none;
+	display: block;
+	width: 100%;
+	padding: .375rem .75rem;
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5;
+	color: #212529;
+	background-clip: padding-box;
+	border: none;
+}
+
+.searchBarList {
+	position: absolute;
+	max-height: 400px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	background-color: white;
+	border: 1px solid lightgrey;
+	border-radius: 0 0 6px 6px;
+	z-index: 999;
+}
+
+.searchBarItem {
+	padding: 4px 12px;
+	height: 36px;
+	color: #212529;
+	line-height: 28px;
 	cursor: pointer;
 }
 
-.optionItem:hover {
-	background-color: #40505d;
+.searchBarItem:hover {
+	background-color: lightgrey;
 }

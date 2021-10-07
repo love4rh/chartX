@@ -2,11 +2,32 @@
 
 
 .chartMain {
+  margin-top: 30px;
   overflow: hidden;
   background-color: $chartBGColor;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid lightgray;
+  // border-top: 1px solid lightgray;
+}
+
+.chartOption {
+  display: none;
+  position: absolute;
+  top: 5px;
+  cursor: pointer;
+  color: $basicColor;
+}
+
+.chartMain:hover .chartOption {
+  display: inline-block;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  flex-basis: 32px;
+  position: relative;
 }
 
 .chartTitleDiv {
@@ -14,7 +35,6 @@
   font-weight: bolder;
   font-size: 1.2rem;
   display: flex;
-  flex-basis: 32px;
   align-items: flex-end;
   justify-content: space-around;
 }
@@ -67,6 +87,11 @@
   stroke-dasharray: 3,3;
 }
 
+.zero-line {
+  stroke: #999;
+  stroke-width: 1px;
+}
+
 .tick {
   font-size: 0.8rem;
 }
@@ -114,18 +139,32 @@
 .legendItemBox {
   cursor: pointer;
   margin: 0 16px;
+  display: flex;
 }
 
 .legendCheckBox {
   display: inline-block;
-  position: relative;
-  top: 3px;
 }
 
 .legendTitle {
   display: inline-block;
+  font-size: 0.9rem;
 }
 
 .axis-tip-x {
   font-size: 12px;
+}
+
+.chartOptionPanel {
+  position: absolute;
+  top: 36px;
+  right: 5px;
+  height: 300px;
+  background-color: $sideMenuBGColor;
+  color: $sideMenuFGColor;
+  overflow-x: hidden;
+  width: 300px;
+  padding: 10px;
+  z-index: 999;
+  border-radius: 5px;
 }

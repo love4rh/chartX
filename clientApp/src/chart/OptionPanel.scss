@@ -1,0 +1,21 @@
+@import "../view/theme.scss";
+
+
+.optionPanel {
+	box-sizing: border-box;
+	height: 100%;
+	padding: 7px;
+}
+
+.optionItem, .optionLabel {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	height: 32px;
+	line-height: 24px;
+	cursor: pointer;
+}
+
+.optionItem:hover {
+	background-color: #40505d;
+}

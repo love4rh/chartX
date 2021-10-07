@@ -15,7 +15,7 @@ import BasicDataSource from '../grid/BasicDataSource.js';
 import ConsoleView from './ConsoleView.js';
 import DummyView from './DummyView.js';
 
-import './AppFrame.scss';
+import './ChartFrame.scss';
 
 
 

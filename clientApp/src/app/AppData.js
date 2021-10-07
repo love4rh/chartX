@@ -9,8 +9,6 @@ import { apiProxy } from '../util/apiProxy.js';
 
 class AppData {
   constructor (props) {
-    const { method, compCode } = props;
-
     this._handler = [];
     this._dataList = [];
     this._chart = {};
@@ -21,17 +19,37 @@ class AppData {
     this._userExtentY = [null, null];
     this._dataExtentY = [[0, 100], [0, 100]];
 
-    if( (isvalid(method) && method !== '') || compCode !== 'sample' ) {
-      this.setFetchParams(method, compCode);
-    } else if( compCode === 'sample' ) {
-      this.getSampleData();
+    this._pageInfo = [];
+
+    this._codeList = [ {code: '066570', name: 'LG전자', english: 'LGELECTRONICS', ipoDate: '2002/04/22', market: 'KOSPI', business: '전기전자(전자제품)' } ];
+  }
+
+  setCodeList = (codes) => {
+    this._codeList = codes;
+  }
+
+  getFilteredCodes = (keyword) => {
+    const pattern = new RegExp(keyword, 'gi');
+
+    // d: { code, name, business }
+    return this._codeList.filter((d) => pattern.test(d.code) || pattern.test(d.name) || pattern.test(d.business));
+  }
+
+  getCodeTitle = (code) => {
+    const item = this._codeList.filter((d) => d.code === code);
+
+    if( item.length === 1 ) {
+      const d = item[0];
+      return `${d.name} / ${d.code} / ${d.business}`;
     }
+
+    return code;
   }
 
   // DiosDataSource에서 가져옴
   // { (title), columns, records }
   
-  getSampleData = () => {
+  makeSampleData = () => {
     const oneDay = 24 * 60 * 60000;
     // eslint-disable-next-line
     const baseTick = tickCount() - oneDay * 30;
@@ -54,10 +72,15 @@ class AppData {
     // const { columns } = sample;
 
     this._dataList = [{
-      title: 'sample',
+      title: 'sample1',
       columns: columns,
       editable: false,
       marker: [{ point: rindex.filter(d => d % 10 === 0), color: 'red' }, { point: rindex.filter(d => d % 7 === 0), color: 'blue' }]
+    }, {
+      title: 'sample2',
+      columns: columns,
+      editable: false,
+      marker: [{ point: rindex.filter(d => d % 13 === 0), color: 'red' }, { point: rindex.filter(d => d % 11 === 0), color: 'blue' }]
     }];
 
     this._chart = { X: 0, Y1: [1, 2], Y2: [3, 4, 5] };
@@ -65,29 +88,35 @@ class AppData {
     return this._dataList[0];
   }
 
-  setFetchParams = (method, code) => {
-    this._method = method;
-    this._compCode = code;
-
-    if( 'guessBP' === method ) {
-      this.getBuyPointData();
-    } else if( 'year' === method ) {
-      this.getAnnualDataByCode(this._compCode);
-    } else {
-      this.getChartDataByCode(this._compCode);
-    }
+  fetchAnnualDataByCode = (code, cb) => {
+    apiProxy.getYearlyData(code,
+      (res) => {
+        this.handleDataOK(res);
+        cb(true);
+      },
+      (err) => {
+        this.handleDataError(err);
+        cb(false);
+      }
+    );
   }
 
-  getAnnualDataByCode = (code) => {
-    apiProxy.getYearlyData(code, this.handleDataOK, this.handleDataError);
-  }
-
-  getChartDataByCode = (code) => {
-    apiProxy.getCountedData(code, 380, this.handleDataOK, this.handleDataError);
+  fetchChartDataByCode = (code, cb) => {
+    apiProxy.getCountedData(code, 380,
+      (res) => {
+        this.handleDataOK(res);
+        cb(true);
+      },
+      (err) => {
+        this.handleDataError(err);
+        cb(false);
+      }
+    );
   }
 
   handleDataOK = (res) => {
     console.log('APPDATA OK', res);
+
     if( 0 === res.returnCode ) {
       const { data, chart, colorMap, extentY1, extentY2 } = res.response;
 
@@ -96,8 +125,6 @@ class AppData {
       this._dataExtentY = [ extentY1, extentY2 ];
       this._userExtentY = cp([ extentY1, extentY2 ]);
       this._colorMap = colorMap;
-
-      this.pulseEvent('data changed');
     }
   }
 
@@ -106,40 +133,27 @@ class AppData {
     console.log('APPDATA ERR', err);
   }
 
-  getBuyPointData = () => {
-    const page = isvalid(this._compCode) && this._compCode !== '' ? this._compCode : null;
-
+  fetchBuyPointData = (page, cb) => {
     apiProxy.getBuyPointData(page,
       (res) => {
         if( 0 === res.returnCode ) {
-          const { data, chart, colorMap, extentY1, extentY2 } = res.response;
+          const { data, chart, colorMap, extentY1, extentY2, page, total } = res.response;
 
           this._dataList = data;
           this._chart = chart;
           this._dataExtentY = [ extentY1, extentY2 ];
           this._userExtentY = cp([ extentY1, extentY2 ]);
           this._colorMap = colorMap;
+          this._pageInfo = [ page, total ];
 
-          this.pulseEvent('data changed');
+          cb(true);
         }
       },
       (err) => {
         console.log('APPDATA ERR', err);
-        // TODO 예외 처리
+        cb(false);
       }
     );
-  }
-
-  // handle looks like function(sender, event).
-  // sender will be 'appData'
-  addEventListener = (handler) => {
-    this._handler.push(handler);
-  }
-
-  pulseEvent = (evt) => {
-    for(var i = 0; i < this._handler.length; ++i) {
-      this._handler[i]('appData', evt);
-    }
   }
 
   setUserExtentY = (y1, y2) => {
@@ -150,13 +164,10 @@ class AppData {
     if( y2 ) {
       this._userExtentY[1] = y2;
     }
-
-    this.pulseEvent('extent changed');
   }
 
   setCommonRangeUsage = (flag) => {
     this._useCommonRange = flag;
-    this.pulseEvent('extent changed');
   }
 
   getDataList = () => {
@@ -190,6 +201,11 @@ class AppData {
 
   getColorMap = () => {
     return this._colorMap;
+  }
+
+  // returns [ pageNo, totalCount ]
+  getPageInfo = () => {
+    return this._pageInfo;
   }
 };
 

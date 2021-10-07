@@ -3,8 +3,8 @@ import axios from 'axios';
 import { makeid, isvalid, isundef } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
-export const _serverBaseUrl_ = 'http://stock.tool4.us';
-// export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
+// export const _serverBaseUrl_ = 'http://stock.tool4.us';
+export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
 
@@ -52,6 +52,27 @@ const apiProxy = {
 			});
 	},
 
+	signIn: (uid, pw, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios.get(`${_serverBaseUrl_}/start`, {
+			headers: {
+				'Content-Type': 'application/json;charset=utf-8',
+				'x-user-token': _userToken,
+				'x-auth-code': `auth code here`,
+				'x-user-identifier': uid,
+				'x-user-password': pw
+			}
+		}).then(res => {
+			console.log('CHECK - SI', res);
+			apiProxy.leaveWaiting();
+			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			if( cbErr ) { cbErr(err); }
+		});
+	},
+
 	getBuyPointData: (page, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
@@ -81,6 +102,7 @@ const apiProxy = {
 				'x-auth-code': `auth code here`
 			}
 		}).then(res => {
+			console.log('CHECK - CNT', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -99,6 +121,7 @@ const apiProxy = {
 				'x-auth-code': `auth code here`
 			}
 		}).then(res => {
+			console.log('CHECK - YEAR', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {

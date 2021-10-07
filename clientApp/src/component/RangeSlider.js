@@ -64,8 +64,9 @@ class RangeSlider extends Component {
     return null; // null을 리턴하면 따로 업데이트 할 것은 없다라는 의미
   }
 
+  // pixel --> value
   // pos: mouse postion
-  calculatePosition = (pos) => {
+  calculateValue = (pos) => {
     const { vertical, range } = this.state;
 
     let rp;
@@ -81,6 +82,22 @@ class RangeSlider extends Component {
     rp += range[0];
 
     return Math.max(range[0], Math.min(rp, range[1]));
+  }
+
+  // value --> pixel
+  calculatePosition = (value) => {
+    const { vertical, range } = this.state;
+
+    let pos = 0;
+    if( vertical ) {
+      const { offsetTop, offsetHeight } = this._mainDiv.current;
+      pos = (value - range[0]) / (range[1] - range[0]) * offsetHeight + offsetTop;
+    } else {
+      const { offsetLeft, offsetWidth } = this._mainDiv.current;
+      pos = (value - range[0]) / (range[1] - range[0]) * offsetWidth + offsetLeft;
+    }
+
+    return pos;
   }
 
   calculateGap = (gap) => {
@@ -104,7 +121,10 @@ class RangeSlider extends Component {
     document.addEventListener('mousemove', this._mouseHandler[type]['move'], { capture: true });
     document.addEventListener('mouseup', this._mouseHandler[type]['up'], { capture: true });
 
-    this.setState({ mouseState: { type, sX: ev.clientX, sY: ev.clientY, sRange: cp(this.state.selectedRange) } });
+    const { vertical, selectedRange } = this.state;
+    const ptRange = selectedRange.map(v => this.calculatePosition(v));
+
+    this.setState({ mouseState: { type, beginPos: (vertical ? ev.clientY : ev.clientX), ptRange, sRange: cp(selectedRange) } });
   }
 
   handleMouseMove = (type) => (ev) => {
@@ -117,11 +137,13 @@ class RangeSlider extends Component {
     ev.preventDefault();
     ev.stopPropagation();
 
-    if( type === 'track' ) {
-      const { sX, sY, sRange } = mouseState;
-      this._moveSlider(type, vertical ? ev.clientY - sY : ev.clientX - sX, false, sRange);
+    const { beginPos, sRange, ptRange } = mouseState;
+    const move = (vertical ? ev.clientY : ev.clientX) - beginPos;
+
+    if( 'track' === type ) {
+      this._moveSlider(type, move, false, sRange);
     } else {
-      this._moveSlider(type, vertical ? ev.clientY : ev.clientX, false);
+      this._moveSlider(type, ptRange['left' === type ? 0 : 1] + move, false);
     }
   }
 
@@ -136,21 +158,23 @@ class RangeSlider extends Component {
     document.removeEventListener('mousemove', this._mouseHandler[type]['move'], { capture: true });
     document.removeEventListener('mouseup', this._mouseHandler[type]['up'], { capture: true });
 
-    if( type === 'track' ) {
-      const { sX, sY, sRange } = mouseState;
-      this._moveSlider(type, vertical ? ev.clientY - sY : ev.clientX - sX, true, sRange);
+    const { beginPos, sRange, ptRange } = mouseState;
+    const move = (vertical ? ev.clientY : ev.clientX) - beginPos;
+
+    if( 'track' === type ) {
+      this._moveSlider(type, move, true, sRange);
     } else {
-      this._moveSlider(type, vertical ? ev.clientY : ev.clientX, true);
+      this._moveSlider(type, ptRange['left' === type ? 0 : 1] + move, true);
     }
   }
 
   // type이 both이면 value는 이동 비율((0, 1))임
-  _moveSlider = (type, value, trigger, sRange) => {
+  _moveSlider = (type, pos, trigger, sRange) => {
     const { onEvent } = this.props;
     const { selectedRange, range } = this.state;
 
     if( type === 'track' ) {
-      let gap = this.calculateGap(value);
+      let gap = this.calculateGap(pos);
       if( sRange[0] + gap < range[0] ) {
         gap = range[0] - sRange[0];
       } else if( range[1] < sRange[1] + gap ) {
@@ -159,11 +183,11 @@ class RangeSlider extends Component {
       selectedRange[0] = sRange[0] + gap;
       selectedRange[1] = sRange[1] + gap;
     } else if( type === 'both' ) {
-      const mv = (range[1] - range[0]) * value;
+      const mv = (range[1] - range[0]) * pos;
       selectedRange[0] = Math.max(range[0], Math.min(selectedRange[0] - mv, range[1]));
       selectedRange[1] = Math.max(range[0], Math.min(selectedRange[1] + mv, range[1]));
     } else {
-      selectedRange[type === 'left' ? 0 : 1] = this.calculatePosition(value);
+      selectedRange[type === 'left' ? 0 : 1] = this.calculateValue(pos);
     }
 
     if( trigger && onEvent ) {

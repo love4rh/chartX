@@ -114,7 +114,8 @@ public class ChartTool
             {
                 if( c == 0 )
                 {
-                    int bFlag = ((Double) ds.getCell(_suggestIdx, r)).intValue();
+                    Double vFlag = (Double) ds.getCell(_suggestIdx, r);
+                    int bFlag = vFlag == null ? 0 : vFlag.intValue();
                     
                     if( bFlag > 0 )
                     {
@@ -143,6 +144,12 @@ public class ChartTool
                     v = pv;
                     System.out.println("null value found in (" + c + ", " + r + ")");
                 }
+                
+                if( "number".equals(typeStr) && ((Double) v).isNaN() )
+                {
+                    v = pv;
+                    System.out.println("NaN value found in (" + c + ", " + r + ")");
+                }
 
                 if( "number".equals(typeStr) || v == null )
                 {
@@ -162,7 +169,11 @@ public class ChartTool
                 else
                     sb.append("\"").append(v).append("\"");
                 
-                pv = v;
+                if( v != null )
+                {
+                    pv = v;
+                }
+                
                 assigned = true;
             }
 

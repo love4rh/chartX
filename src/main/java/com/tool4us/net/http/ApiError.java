@@ -19,6 +19,7 @@ public enum ApiError
     
     InvalidAuthCode(2001, "invalid auth code"),
     InvalidEULA(2002, "invalid user agreements"),
+    InvalidUser(2003, "invalid id or password"),
 
     NotExistsResult(3001, "not exists the result"),
     OverCapacityLimit(3002, "over capacity limit"),

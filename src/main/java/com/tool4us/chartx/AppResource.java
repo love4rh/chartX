@@ -143,7 +143,7 @@ public enum AppResource
             sb.append("{");
             
             sb.append("\"code\":\"").append(item.getKey()).append("\"");
-            sb.append(", \"name\":\"").append(v[2]).append("\"");
+            sb.append(", \"name\":\"").append(v[3]).append("\"");
             sb.append(", \"english\":\"").append(v[4]).append("\"");
             sb.append(", \"ipoDate\":\"").append(v[5]).append("\"");
             sb.append(", \"market\":\"").append(v[6]).append("\"");

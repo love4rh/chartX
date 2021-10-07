@@ -3,11 +3,14 @@ import PropTypes from 'prop-types';
 
 import * as d3 from 'd3';
 
-import { makeid, isvalid, istrue, numberWithCommas } from '../grid/common.js';
+import { makeid, isundef, isvalid, istrue, numberWithCommas } from '../grid/common.js';
+
+import { IoMdOptions } from 'react-icons/io';
+import { RiCheckboxBlankLine, RiCheckboxLine } from 'react-icons/ri';
 
 import { RangeSlider, sliderSize } from '../component/RangeSlider.js';
 
-import { RiCheckboxBlankLine, RiCheckboxLine } from 'react-icons/ri';
+import { OptionPanel } from './OptionPanel.js';
 
 import './styles.scss';
 
@@ -75,7 +78,8 @@ class RunTooltipChart extends Component {
       userXExtent: showingRangeX,
       userY1Extent: showingRangeY1,
       userY2Extent: showingRangeY2,
-      markerData
+      markerData,
+      optionPanelOn: false
     };
 
     // console.log('RunChart construct', this.state);
@@ -94,9 +98,9 @@ class RunTooltipChart extends Component {
 
   static getDerivedStateFromProps(nextProps, prevState) {
     if( nextProps.width !== prevState.canvasWidth || nextProps.height !== prevState.canvasHeight ) {
-      const withSlider = istrue(nextProps.withSlider);
-      const withYSlider = istrue(nextProps.withYSlider);
-      const withLegend = istrue(nextProps.withLegend);
+      const withSlider = istrue(prevState.withSlider);
+      const withYSlider = istrue(prevState.withYSlider);
+      const withLegend = istrue(prevState.withLegend);
       const hasY2 = nextProps.data.yData.length > 1;
 
       return {
@@ -267,6 +271,16 @@ class RunTooltipChart extends Component {
 
     d3.select('.' + guideID).remove();
 
+    if( useY2 ) {
+      const zeroPos =  axesY[1]['scale'](0);
+
+      g.append('g').classed(guideID, true)
+        .classed('zero-line', true)
+        .append('line')
+        .attr('x1', 0).attr('x2', WIDTH)
+        .attr('y1', zeroPos).attr('y2', zeroPos);
+    }
+
     // add guidance line
     const hoverLine = g.append('g').classed(guideID, true)
       .classed('focus', true).classed(focusDivID, true)
@@ -427,8 +441,8 @@ class RunTooltipChart extends Component {
     g.append('rect').classed(guideID, true)
       .classed('overlay', true).classed(overlayDivID, true)
       .attr('width', WIDTH).attr('height', HEIGHT)
-      .on('mouseover', () => { tipElements.map(e => e.style('display', null)) })
-      .on('mouseout', (ev) => {
+      .on('mouseenter', () => { tipElements.map(e => e.style('display', null)) })
+      .on('mouseleave', (ev) => {
         const mX = ev.offsetX - margin.LEFT, mY = ev.offsetY - margin.TOP;
         if( mX <= 0 || mX >= WIDTH || mY <= 0 || mY >= HEIGHT ) {
           tipElements.map(e => e.style('display', 'none'));
@@ -468,8 +482,8 @@ class RunTooltipChart extends Component {
         .attr('clip-path', `url(#${clipBoxID})`)
         .append('path')
         .classed(lineID, true)
-        .on('mouseover', () => d3.select('.' + lineID).classed('selectedLine', true) )
-        .on('mouseout',  () => d3.select('.' + lineID).classed('selectedLine', false) )
+        .on('mouseenter', () => d3.select('.' + lineID).classed('selectedLine', true) )
+        .on('mouseleave',  () => d3.select('.' + lineID).classed('selectedLine', false) )
         .on('mousedown', () => mouseDown = true )
         .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
         .attr('fill', 'none')
@@ -549,21 +563,61 @@ class RunTooltipChart extends Component {
     }
   }
 
-  render() {
+  handleClickOption = () => {
+    const { optionPanelOn } = this.state;
+
+    if( optionPanelOn ) {
+      this.setState({ optionPanelOn: false });
+    } else {
+      this.setState({ optionPanelOn: true });
+    }
+  }
+
+  renderOptionPanel () {
+    const { data, useY2, userY1Extent, userY2Extent } = this.state;
+    const { extentY1, extentY2 } = data;
+
+    const extentData = [];
+
+    extentData.push({
+      title: '왼쪽 축 범위',
+      extent: extentY1,
+      value: isvalid(userY1Extent) ? userY1Extent : extentY1
+    });
+
+    if( useY2 ) {
+      extentData.push({
+        title: '오른쪽 축 범위',
+        extent: extentY2,
+        value: isvalid(userY2Extent) ? userY2Extent : extentY2
+      });
+    }
+
+    return (
+      <OptionPanel extentData={extentData} />
+    );
+  }
+
+  render () {
     const { width, title } = this.props;
     const {
       data, chartDiv, margin,
       withSlider, withYSlider, withLegend,
-      useY2, userXExtent, userY1Extent, userY2Extent
+      useY2, userXExtent, userY1Extent, userY2Extent,
+      optionPanelOn
     } = this.state;
-    const { xData, yData, dateTimeAxis, extentX, extentY } = data;
+    const { xData, yData, dateTimeAxis, extentX, extentY1, extentY2 } = data;
 
     const a = 9, p = 8;
-    const hasY2 = withYSlider && useY2;
+    const hasY2 = useY2;
 
     return (
       <div className="chartMain">
-        <div className="chartTitleDiv">{title}</div>
+        <div className="chartHeader">
+          <div className="chartTitleDiv">{title}</div>
+          <div className="chartOption" style={{ right:margin.RIGHT }} onClick={this.handleClickOption}><IoMdOptions size="24" /></div>
+          { optionPanelOn && <div className="chartOptionPanel">{ this.renderOptionPanel() } </div> }
+        </div>
         { withLegend &&
           <div className="legendBox" style={{ width:`${width}px` }}>
             { yData.map((dd, idx) => {
@@ -592,8 +646,8 @@ class RunTooltipChart extends Component {
               'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
             }}>
               <RangeSlider
-                valueRange={extentY[0]}
-                selectedRange={userY1Extent}
+                valueRange={extentY1}
+                selectedRange={isundef(userY1Extent) ? extentY1 : userY1Extent}
                 onEvent={this.handleSliderEvent('Y1')}
                 vertical={true}
                 tipTextPos={'right'}
@@ -608,8 +662,8 @@ class RunTooltipChart extends Component {
               'margin': `${margin.TOP - 10}px 0 ${margin.BOTTOM - 10}px 0`
             }}>
               <RangeSlider
-                valueRange={extentY[1]}
-                selectedRange={userY2Extent}
+                valueRange={extentY2}
+                selectedRange={isundef(userY2Extent) ? extentY2 : userY2Extent}
                 onEvent={this.handleSliderEvent('Y2')}
                 vertical={true}
                 tipTextPos={'left'}

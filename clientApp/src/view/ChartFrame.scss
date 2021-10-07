@@ -1,14 +1,14 @@
 @import "../view/theme.scss";
 
 
-.appFrame {
+.chartFrame {
   height: $bodyHeight;
   background-color: $chartBGColor;
-  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: flex-start; // center
+  flex-wrap: nowrap;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
   overflow-y: auto;
 }
 
