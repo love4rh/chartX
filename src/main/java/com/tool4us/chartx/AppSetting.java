@@ -62,11 +62,6 @@ public enum AppSetting
         _options = new AppOptions();
     }
     
-    public boolean checkAuthCode(String authCode)
-    {
-        return authCode != null && !authCode.isEmpty();
-    }
-    
     public void initialize(String configFile) throws Exception
     {
         _configFile = configFile;
@@ -82,7 +77,7 @@ public enum AppSetting
     
     private void load() throws Exception
     {
-        String[] pathName = new String[] { "folder/temporary", "folder/vroot", "folder/data" };
+        String[] pathName = new String[] { "folder/temporary", "folder/vroot", "folder/data", "folder/users" };
 
         for(String key : pathName)
         {
@@ -215,5 +210,35 @@ public enum AppSetting
     public String getColorMap()
     {
         return _options.getAsObject("chart/colorMap").toString();
+    }
+    
+    public String getCrawlegoJar()
+    {
+        return _options.getAsString("resource/crawlego");
+    }
+    
+    public String getLogicFile()
+    {
+        return _options.getAsString("resource/logic");
+    }
+    
+    public String getAccountFile()
+    {
+        return _options.getAsString("resource/accountFile");
+    }
+
+    public String getDOServer()
+    {
+        return _options.getAsString("database/host");
+    }
+
+    public int getDOPort()
+    {
+        return _options.getAsInteger("database/port", 6362);
+    }
+    
+    public String getUserFolder()
+    {
+        return this.parameter("folder", "users");
     }
 }

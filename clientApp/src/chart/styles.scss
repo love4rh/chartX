@@ -13,13 +13,31 @@
 .chartOption {
   display: none;
   position: absolute;
-  top: 5px;
+  top: 0px;
   cursor: pointer;
+  width: 40px;
+  height: 40px;
+}
+
+.btnColor01 {
   color: $basicColor;
 }
 
+.btnColor02 {
+  color: #19ce60;
+}
+
+.chartOption:hover {
+  color: white;
+  background-color: $basicColor;
+  border-radius: 4px;
+}
+
 .chartMain:hover .chartOption {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  align-content: space-around;
+  justify-content: center;
 }
 
 .chartHeader {
@@ -28,6 +46,22 @@
   justify-content: space-around;
   flex-basis: 32px;
   position: relative;
+}
+
+.chartFavorite {
+  display: inline-block;
+  margin-left: 4px;
+  cursor: pointer;
+  line-height: 32px;
+  color: $clrFavorite;
+}
+
+.chartNoFavorite {
+  display: inline-block;
+  margin-left: 4px;
+  cursor: pointer;
+  line-height: 32px;
+  color: #777;
 }
 
 .chartTitleDiv {
@@ -159,12 +193,11 @@
   position: absolute;
   top: 36px;
   right: 5px;
-  height: 300px;
   background-color: $sideMenuBGColor;
   color: $sideMenuFGColor;
   overflow-x: hidden;
-  width: 300px;
-  padding: 10px;
+  height: 285px;
+  padding: 5px;
   z-index: 999;
   border-radius: 5px;
 }

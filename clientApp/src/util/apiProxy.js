@@ -1,25 +1,12 @@
 import axios from 'axios';
 
-import { makeid, isvalid, isundef } from '../util/tool.js';
+import { makeid, isundef, tickCount, SHA256, isvalid } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
-// export const _serverBaseUrl_ = 'http://stock.tool4.us';
-export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
+export const _serverBaseUrl_ = 'https://gx.tool4.us';
+// export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
-
-const basicHeader = {
-	'Content-Type': 'application/json;charset=utf-8',
-	'x-user-token': _userToken
-};
-
-
-const GET = axios.create({
-  baseURL: _serverBaseUrl_,
-  timeout: 12000,
-  headers: basicHeader
-});
-
 
 const apiProxy = {
 	_handleWait: null,
@@ -42,27 +29,27 @@ const apiProxy = {
 		}
 	},
 
-	test: (testString) => {
-		GET.get('/test?testString=' + testString)
-			.then(res => {
-				// to do something with res
-			})
-			.catch(err => {
-				// to do something with err
-			});
+	// 기본 헤더값 생성
+	genHeader: () => {
+		const tick = '' + tickCount();
+		return {
+			'Content-Type': 'application/json;charset=utf-8',
+			'x-user-token': _userToken,
+			'x-timestamp': tick,
+			'x-auth-code': SHA256(tick + _userToken + tick)
+		};
 	},
 
-	signIn: (uid, pw, cbOk, cbErr) => {
+	plugIn: (uid, pw, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
-		axios.get(`${_serverBaseUrl_}/start`, {
-			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
-				'x-user-token': _userToken,
-				'x-auth-code': `auth code here`,
-				'x-user-identifier': uid,
-				'x-user-password': pw
-			}
+		axios({
+			baseURL: _serverBaseUrl_,
+			url: '/start',
+			method: 'post',
+			timeout: 5000,
+			headers: apiProxy.genHeader(),
+			data: { id: uid, pw: SHA256(SHA256(pw) + '/' + _userToken) }
 		}).then(res => {
 			console.log('CHECK - SI', res);
 			apiProxy.leaveWaiting();
@@ -76,12 +63,8 @@ const apiProxy = {
 	getBuyPointData: (page, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
-		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}`, {
-			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
-				'x-user-token': _userToken,
-				'x-auth-code': `auth code here`
-			}
+		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}&count=20`, {
+			headers: apiProxy.genHeader()
 		}).then(res => {
 			console.log('CHECK - BP', res);
 			apiProxy.leaveWaiting();
@@ -96,11 +79,7 @@ const apiProxy = {
 		apiProxy.enterWaiting();
 
 		axios.get(`${_serverBaseUrl_}/ctx?pCode=${compCode}&count=${count}`, {
-			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
-				'x-user-token': _userToken,
-				'x-auth-code': `auth code here`
-			}
+			headers: apiProxy.genHeader()
 		}).then(res => {
 			console.log('CHECK - CNT', res);
 			apiProxy.leaveWaiting();
@@ -115,11 +94,7 @@ const apiProxy = {
 		apiProxy.enterWaiting();
 
 		axios.get(`${_serverBaseUrl_}/ytx?pCode=${compCode}`, {
-			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
-				'x-user-token': _userToken,
-				'x-auth-code': `auth code here`
-			}
+			headers: apiProxy.genHeader()
 		}).then(res => {
 			console.log('CHECK - YEAR', res);
 			apiProxy.leaveWaiting();
@@ -131,18 +106,36 @@ const apiProxy = {
 		});
 	},
 
-	getCompData: (compCode, cbOk, cbErr) => {
+	getCountedDataByCodes: (codes, count, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
-		axios.get(`${_serverBaseUrl_}/gtx?pCode=${compCode}`, {
-			headers: {
-				'Content-Type': 'application/json;charset=utf-8',
-				'x-user-token': _userToken,
-				'x-auth-code': `auth code here`
-			}
+		const codeStr = codes.reduce((p, c) => p + ',' + c);
+
+		axios.get(`${_serverBaseUrl_}/dtx?codes=${codeStr}&count=${count}`, {
+			headers: apiProxy.genHeader()
 		}).then(res => {
+			console.log('CHECK - DXT', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			if( cbErr ) { cbErr(err); }
+		});
+	},
+
+	getComment: (uid, compCode, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios.get(`${_serverBaseUrl_}/comment?uid=${uid}&pCode=${compCode}`, {
+			headers: apiProxy.genHeader()
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			const dt = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+			if( dt.returnCode === 0 && isvalid(dt.response) ) {
+				if( cbOk ) cbOk( decodeURIComponent(dt.response.comment) );
+			} else {
+				if( cbErr ) cbErr(res);
+			}
 		}).catch(err => {
 			apiProxy.leaveWaiting();
 			// console.log('apiProxy ERR', err);
@@ -150,78 +143,64 @@ const apiProxy = {
 		});
 	},
 
-	getMetaData: (cbSuccess, cbError) => {
+	postComment: (uid, compCode, type, comment, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
-		
-		axios({
-			baseURL: _serverBaseUrl_,
-			url: '/metadata',
-			method: 'post',
-			timeout: 24000,
-			headers: basicHeader
-		})
-		.then(res => {
-			apiProxy.leaveWaiting();
-			if( isvalid(res.data) && res.data.returnCode === 0 ) {
-				if( cbSuccess ) cbSuccess(res.data);
-			} else if( cbError ) {
-			  cbError(res);
-      }
-		})
-		.catch(res => {
-			apiProxy.leaveWaiting();
-			if( cbError ) cbError(res);
-		});
-	},
 
-	/**
-	 * data: { dbIdx, query }
-	 */
-  executeQuery: (data, cbSuccess, cbError) => {
-		apiProxy.enterWaiting();
-		
 		axios({
 			baseURL: _serverBaseUrl_,
-			url: '/executeSql',
-			method: 'post',
-			timeout: 60000,
-			headers: basicHeader,
-			data: data
-		})
-		.then(res => {
-			apiProxy.leaveWaiting();
-			if( isvalid(res.data) && res.data.returnCode === 0 ) {
-				if( cbSuccess ) cbSuccess(res.data);
-			} else if( cbError ) {
-			  cbError(res);
-      }
-		})
-		.catch(res => {
-			apiProxy.leaveWaiting();
-			if( cbError ) cbError(res);
-		});
-	},
-
-	getMoreData: (data, cbSuccess, cbError) => {
-		axios({
-			baseURL: _serverBaseUrl_,
-			url: '/moreData',
+			url: '/edit',
 			method: 'post',
 			timeout: 5000,
-			headers: basicHeader,
-			data: data // { qid, beginIdx, length }
-		})
-		.then(res => {
-			if( isvalid(res.data) && res.data.returnCode === 0 ) {
-				if( cbSuccess ) cbSuccess(res.data);
-			} else if( cbError ) {
-			  cbError(res);
-      }
-		})
-		.catch(res => {
-			if( cbError ) cbError(res);
+			headers: apiProxy.genHeader(),
+			data: { id: uid, code: compCode, act: type, comment: encodeURIComponent(comment) }
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			if( cbOk ) { cbOk(true); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			if( cbErr ) { cbErr(err); }
 		});
 	},
+
+	getFavorite: (uid, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios.get(`${_serverBaseUrl_}/fav?uid=${uid}`, {
+			headers: apiProxy.genHeader()
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			const dt = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+			console.log('CHECK - FAV', res);
+			if( dt.returnCode === 0 && isvalid(dt.response) ) {
+				if( cbOk ) cbOk(dt.response);
+			} else {
+				if( cbErr ) cbErr(res);
+			}
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			// console.log('apiProxy ERR', err);
+			if( cbErr ) { cbErr(err); }
+		});
+	},
+
+	postFavorite: (uid, compCode, flag, cbOk, cbErr) => {
+		apiProxy.enterWaiting();
+
+		axios({
+			baseURL: _serverBaseUrl_,
+			url: '/set',
+			method: 'post',
+			timeout: 5000,
+			headers: apiProxy.genHeader(),
+			data: { id: uid, code: compCode, flag: flag }
+		}).then(res => {
+			apiProxy.leaveWaiting();
+			if( cbOk ) { cbOk(true); }
+		}).catch(err => {
+			apiProxy.leaveWaiting();
+			if( cbErr ) { cbErr(err); }
+		});
+	}
 };
 
 export default apiProxy;

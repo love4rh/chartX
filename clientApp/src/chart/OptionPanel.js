@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { makeid, cp } from '../util/tool.js';
+// eslint-disable-next-line
 import { RiCheckDoubleFill, RiCheckFill, RiCloseFill } from 'react-icons/ri';
 
 import { RangeSlider, sliderSize } from '../component/RangeSlider.js';
@@ -34,9 +35,18 @@ class OptionPanel extends Component {
 
   handleSliderEvent = (idx) => (type, param) => {
     const { extentData } = this.state;
-    extentData[idx].value = param; 
+    extentData[idx].value = cp(param);
 
     this.setState({ extentData: extentData });
+  }
+
+  doAction = (type) => () => {
+    const { onApply } = this.props;
+    const { extentData } = this.state;
+
+    if( onApply ) {
+      onApply(type, extentData.map(d => d.value));
+    }
   }
 
   render () {
@@ -47,7 +57,7 @@ class OptionPanel extends Component {
         { extentData.map((d, i) => {
             return (
               <div key={`sliderTxt-${drawId}-${i}`}>
-                <div className="optionLabel" style={{ marginTop:`${i === 0 ? 20 : 55}px` }}>{d.title}</div>
+                <div className="optionLabel" style={{ marginTop:`${i === 0 ? 0 : 55}px` }}>{d.title}</div>
                 <div
                   className="optionLabel"
                   style={{ height:`${sliderSize}px`, 'margin': `0 ${20}px`, 'padding': `0 ${10}px` }}
@@ -65,6 +75,11 @@ class OptionPanel extends Component {
             );
           })
         }
+        <div className="optionButtons">
+          <div className="optionButton" onClick={this.doAction('apply')}><RiCheckFill size="24" /></div>
+          {/* <div className="optionButton" onClick={this.doAction('applyAll')}><RiCheckDoubleFill size="24" /></div> */}
+          <div className="optionButton" onClick={this.doAction('cancel')}><RiCloseFill size="24" /></div>
+        </div>
       </div>
     );
   }

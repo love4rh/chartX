@@ -7,6 +7,32 @@
 	padding: 7px;
 }
 
+.optionButtons {
+	display: flex;
+	position: relative;
+	top: 40px;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.optionButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 3px;
+	box-sizing: border-box;
+	cursor: pointer;
+	width: 44px;
+	height: 44px;
+}
+
+.optionButton:hover {
+	border-radius: 3px;
+	// border: 1px solid $basicColor;
+	// color: white;
+	color: #5ed8ef; // $basicColor;
+}
+
 .optionItem, .optionLabel {
 	display: flex;
 	align-items: center;

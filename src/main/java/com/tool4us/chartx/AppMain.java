@@ -1,13 +1,15 @@
 package com.tool4us.chartx;
 
-import static com.tool4us.treatdb.task.JobQueue.JQ;
 import static com.tool4us.chartx.AppSetting.OPT;
 import static com.tool4us.chartx.AppResource.RES;
+import static com.tool4us.common.AccountManager.AM;
+import static com.tool4us.common.task.JobQueue.JQ;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 
+import com.lge.neton.common.NetOnSetting;
 import com.tool4us.common.Logs;
 
 import lib.turbok.util.DataFileManager;
@@ -85,6 +87,8 @@ public class AppMain
     
     private void initialize() throws Exception
     {
+        NetOnSetting.C.initialize(OPT.temporaryFolder(), false, null);
+        
         JQ.begin();
 
         DataFileManager.deleteTempFiles(-1);
@@ -93,6 +97,7 @@ public class AppMain
         _batchJob.start();
         
         RES.reload();
+        AM.initialize(OPT.getAccountFile());
     }
 
     /**

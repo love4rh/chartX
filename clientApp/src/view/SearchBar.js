@@ -9,21 +9,23 @@ import './MainFrame.scss';
 
 class SearchBar extends Component {
   static propTypes = {
-    changeCode: PropTypes.func,
+    itemList: PropTypes.array,
+    onChange: PropTypes.func,
     onGetList: PropTypes.func,
-    keyword: PropTypes.string,
+    selected: PropTypes.any,
+    makeTitle: PropTypes.func,
   }
 
   constructor (props) {
     super(props);
 
-    const { keyword } = this.props;
+    const { selected, makeTitle, itemList } = this.props;
 
     this.state = {
-      keyword,
+      keyword: makeTitle(selected),
       drawKey: makeid(6),
       clientWidth: 100,
-      itemList: [],
+      itemList: itemList,
       focused: false
     };
 
@@ -56,23 +58,20 @@ class SearchBar extends Component {
   }
 
   handleSelectItem = (idx) => () => {
-    const { itemList } = this.state;
+    const { makeTitle, onChange, itemList } = this.props;
+    const d = this.state.itemList[idx];
 
-    const d = itemList[idx];
-    const itemTitle = `${d.name} / ${d.code} / ${d.business}`;
-
-    const { changeCode } = this.props;
-
-    if( changeCode ) {
-      changeCode(d.code, (isOk) => {
+    if( onChange ) {
+      onChange(typeof d === 'string' ? d : d.code, (isOk) => {
         if( isOk ) {
-          this.setState({ focused: false, keyword: itemTitle, drawKey: makeid(6) });
+          this.setState({ focused: false, keyword: makeTitle(d), drawKey: makeid(6), itemList: itemList });
         }
       });
     }
   }
 
   render () {
+    const { makeTitle } = this.props;
     const { drawKey, keyword, clientWidth, itemList, focused } = this.state;
 
     return (
@@ -91,7 +90,7 @@ class SearchBar extends Component {
             { itemList.map((d, i) => {
               return (
                 <div key={`searched-item-${i}`} className="searchBarItem" onClick={this.handleSelectItem(i)}>
-                  {`${d.name} / ${d.code} / ${d.business}`}
+                  {makeTitle(d)}
                 </div>
               );
             })}

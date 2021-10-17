@@ -19,31 +19,53 @@ import { MainFrame } from '../view/MainFrame.js';
 import './App.scss';
 
 
+const _sessionKey_ = 'chartx.account';
+
 
 class App extends Component {
   constructor (props) {
     super(props);
 
-    const nowTick = tickCount();
-    const tmpStr = sessionStorage.getItem('chartx.account');
+    const url = window.location.href;
+    const pRoot = url.indexOf('/', 10);
+    const urlComp = url.substring(pRoot + 1).split('/');
+
+    // console.log('App URL', url, urlComp);
+
+    const tmpStr = localStorage.getItem(_sessionKey_);
 
     let lastID = null;
+    let code = null;
+    const appData = new AppData(this);
 
     if( isvalid(tmpStr) ) {
-      const session = JSON.parse(tmpStr);
-
-      if( nowTick < session.timeout ) {
-        lastID = session.lastID;
-      }
+      const ud = JSON.parse(tmpStr);
+      lastID = ud.uid;
+      appData.initialize(ud.uid, ud.data);
     }
 
+    let viewType = '';
+
+    if( isvalid(lastID) ) {
+      if( 'year' === urlComp[0] ) {
+        viewType = 'year';
+        code = isundef(urlComp[1]) ? '066570' : urlComp[1];
+      } else {
+        viewType = 'choice';
+      }
+    } else {
+      viewType = 'signin';
+    }
+    
+
     this.state = {
-      appData: new AppData(),
+      appData,
       processing: false,
-      appTitle: 'Capitalism',
+      appTitle: 'GX',
       inputValue: { identifier: '', password: '' },
       userID: lastID,
-      viewType: isvalid(lastID) ? 'choice' : 'signin',
+      viewType,
+      code,
     };
 
     this.handleUnload = this.handleUnload.bind(this);
@@ -59,7 +81,11 @@ class App extends Component {
 
   // Application Close Event Handler
   handleUnload = (ev) => {
+    const { appData } = this.state;
+
     console.log('handleUnload', ev);
+
+    appData.unmount();
 
     /*
     const message = 'Are you sure you want to close?';
@@ -77,22 +103,19 @@ class App extends Component {
   }
 
   enterWaiting = () => {
-    console.log('app enterWaiting called');
     this.setState({ processing: true });
   }
 
   leaveWaiting = () => {
-    console.log('app leaveWaiting called');
     this.setState({ processing: false });
   }
 
-  procSignIn = (uid) => {
-    const ss = {
-      timeout: tickCount() + 30 * 60000, // 30분
-      lastID: uid
-    };
+  procSignIn = (uid, data) => {
+    const { appData } = this.state;
 
-    sessionStorage.setItem('chartx.account', JSON.stringify(ss));
+    appData.initialize(uid, data);
+    localStorage.setItem(_sessionKey_, JSON.stringify({ uid, data, tick: tickCount() }));
+
     this.setState({ userID: uid, viewType: 'choice' });
   }
 
@@ -102,7 +125,7 @@ class App extends Component {
   }
 
   handleGo = () => {
-    const { inputValue, appData } = this.state;
+    const { inputValue } = this.state;
     const u = inputValue['identifier'], p = inputValue['password'];
 
     if( isundef(u) || u === '' || isundef(p) || p === '' ) {
@@ -110,11 +133,10 @@ class App extends Component {
       return;
     }
 
-    apiProxy.signIn(u, p,
+    apiProxy.plugIn(u, p,
       (res) => {
         if( res.returnCode === 0 && isvalid(res.response) ) {
-          appData.setCodeList(res.response.codes);
-          this.procSignIn(u);
+          this.procSignIn(u, res.response);
         } else {
           this.pulseAlertMessage(res.returnMessage);
         }
@@ -125,14 +147,16 @@ class App extends Component {
     );
   }
 
-  goTo = (page) => () => {
+  goTo = (page) => (param) => {
+    // console.log('app goTo', page, param);
     if( 'signin' === page ) {
-      sessionStorage.removeItem('chartx.account');
+      this.state.appData.clear();
+      localStorage.removeItem(_sessionKey_);
       this.setState({ userID: null, viewType: 'signin' });
     } else if( 'choice' === page ) {
       this.setState({ viewType: 'choice' });
     } else {
-      this.setState({ viewType: page, code: 'sample' }); // 066570
+      this.setState({ viewType: page, code: (isundef(param) || typeof param === 'object' ? '066570' : param) }); // sample
     } 
   }
 
@@ -169,10 +193,10 @@ class App extends Component {
     const { appTitle, message } = this.state;
     const menu = [
       { title: 'View a Company', viewID: 'year', style: 'outline-primary' },
-      { title: 'View a Business', viewID: 'year', style: 'outline-info' },
+      { title: 'View a Business', viewID: 'business', style: 'outline-info' },
       { title: 'Guess Buy/Sell Point', viewID: 'guessBP', style: 'outline-success' },
-      { title: 'Recommend by 4PXX', viewID: 'recommend', style: 'outline-warning' },
-      { title: 'My Codes (implementing)', viewID: 'interest', style: 'outline-danger' },
+      { title: 'Recommend by 4PXX', viewID: '4pxx', style: 'outline-warning' },
+      { title: 'My Interests', viewID: 'interest', style: 'outline-danger' },
       { title: 'Sign Out', viewID: 'signin', style: 'outline-secondary' }
     ];
 
@@ -196,10 +220,10 @@ class App extends Component {
     );
   }
 
-  renderByType = () => {
-    const { appTitle, viewType, appData, code } = this.state;
-
-    console.log('render', viewType);
+  renderByType = (viewType) => {
+    const { appTitle, appData, code } = this.state;
+    
+    // TODO 로그인 상태 체크
 
     if( 'signin' === viewType) {
       return this.renderLogInView();
@@ -217,11 +241,11 @@ class App extends Component {
   }
 
   render () {
-    const { processing, } = this.state;
+    const { viewType, processing } = this.state;
 
     return (
       <div className="App">
-        { this.renderByType() }
+        { this.renderByType(viewType) }
         { processing && <div className="blockedLayer"><Spinner className="spinnerBox" animation="border" variant="secondary" /></div> }
       </div>
     );

@@ -1,5 +1,7 @@
 package com.tool4us.chartx;
 
+import static com.tool4us.common.AccountManager.AM;
+
 import com.tool4us.common.Logs;
 
 import lib.turbok.util.DataFileManager;
@@ -48,13 +50,16 @@ public class BatchJobs extends Thread
     
     public void doJob()
     {
+        AM.save();
         DataFileManager.deleteTempFiles(-1);
     }
     
     public void end()
     {
         _running = false;
-        
+
+        doJob();
+
         synchronized(_syncObject)
         {
             _syncObject.notify();

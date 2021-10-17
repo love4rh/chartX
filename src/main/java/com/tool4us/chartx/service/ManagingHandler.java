@@ -1,6 +1,14 @@
 package com.tool4us.chartx.service;
 
 import static com.tool4us.chartx.AppSetting.OPT;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONObject;
+
+import com.tool4us.chartx.util.ChartTool;
+
 import static com.tool4us.chartx.AppResource.RES;
 
 import com.tool4us.net.http.TomyRequestor;
@@ -38,7 +46,17 @@ public class ManagingHandler extends ApiHandler
             OPT.reload();
             RES.reload();
         }
-        
+        else if( "test".equals(actType) )
+        {
+            List<String> c = new ArrayList<String>();
+            c.add("000810"); c.add("000400");
+            
+            List<String> d = new ArrayList<String>();
+            d.add("20210826"); d.add("20210906");
+            
+            JSONObject obj = ChartTool.queryPrice( c, d );
+            return makeResponseJson(obj);
+        }
 
         return makeResponseJson(ApiError.Success);
     }

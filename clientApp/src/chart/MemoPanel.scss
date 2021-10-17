@@ -1,0 +1,65 @@
+@import "../view/theme.scss";
+
+
+.memoPanel {
+	box-sizing: border-box;
+	height: 100%;
+	padding: 7px;
+	display: flex;
+	flex-direction: column;
+}
+
+.memoBox {
+	outline: none;
+}
+
+.memoNewBox {
+	flex: 1 1;
+}
+
+.memoButtons {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.memoButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 3px;
+	box-sizing: border-box;
+	cursor: pointer;
+	width: 36px;
+	height: 36px;
+}
+
+.memoButton:hover {
+	border-radius: 3px;
+	// border: 1px solid $basicColor;
+	// color: white;
+	color: #5ed8ef; // $basicColor;
+}
+
+.memoHistory {
+	outline: none;
+	resize: none;
+	width: 356px;
+	color: #212529;
+	border: 1px solid lightgrey;
+	border-radius: 4px;
+}
+
+.memoAddBox {
+	outline: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 310px;
+	height: 36px;
+	margin-top: 6px;
+	color: #212529;
+	border: 1px solid lightgrey;
+	border-radius: 4px;
+}

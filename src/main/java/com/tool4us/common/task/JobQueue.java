@@ -1,4 +1,4 @@
-package com.tool4us.treatdb.task;
+package com.tool4us.common.task;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;

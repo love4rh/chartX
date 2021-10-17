@@ -29,9 +29,7 @@ public class GetYearlyDataHandler extends ApiHandler
         int _xColumn = OPT.getChartX();
         int[][] _yList = OPT.getChartY();
         
-        String authCode = req.getHeaderValue("x-auth-code");
-        
-        if( !OPT.checkAuthCode(authCode) )
+        if( !UT.checkAuthCode(req, false) )
             return makeResponseJson(ApiError.InvalidAuthCode);
         
         String pCode = req.getParameter("pCode");
@@ -42,9 +40,22 @@ public class GetYearlyDataHandler extends ApiHandler
         // 데이터 가져오기
         String pathName = OPT.dataFolder() + File.separator + "P" + pCode + ".pmd";
         
+        File dataFile = new File(pathName);
+        if( !dataFile.exists() )
+        {
+            if( 0 == ChartTool.runLogic(pCode) )
+            {
+                if( !dataFile.exists() )
+                    return makeResponseJson(ApiError.NotReadyData);
+            }
+            else
+                return makeResponseJson(ApiError.NotReadyData);
+        }
+        
         FileMapStore ds = FileMapStore.newInstance(pathName);
+        
         if( ds == null )
-            return makeResponseJson(ApiError.InvalidParameter);
+            return makeResponseJson(ApiError.InvalidParameter); 
 
         StringBuilder sb = new StringBuilder();
         
@@ -68,7 +79,7 @@ public class GetYearlyDataHandler extends ApiHandler
         
         Map<Integer, double[]> extentMap = new TreeMap<Integer, double[]>();
         
-        ChartTool.attachAnnualDataBlock(sb, RES.getCodeTitle(pCode), ds, extentMap);
+        ChartTool.attachAnnualDataBlock(sb, RES.getCodeTitle(pCode), pCode, ds, extentMap);
         
         sb.append("]");
         

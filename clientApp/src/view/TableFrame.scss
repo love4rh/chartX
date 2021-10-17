@@ -1,0 +1,41 @@
+@import "../view/theme.scss";
+
+
+.tableFrame {
+  height: $bodyHeight;
+  background-color: $chartBGColor;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+
+.tableTitleBox {
+
+}
+
+
+
+.favoriteTable {
+  height: $bodyHeight;
+  background-color: $chartBGColor;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+
+.favComment {
+	outline: none;
+	resize: none;
+	width: 356px;
+	color: #212529;
+	border: 1px solid lightgrey;
+	border-radius: 4px;
+}

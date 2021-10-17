@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import BasicDataSource from '../grid/BasicDataSource.js';
+
 import { convertToChartData } from '../chart/chartTool.js';
 import { RunTooltipChart } from '../chart/RunTooltipChart.js';
 
@@ -13,7 +15,8 @@ import './ChartFrame.scss';
 class ChartFrame extends Component {
   static propTypes = {
     appData: PropTypes.object.isRequired,  // Application 전반에 걸쳐 사용되는 데이터 객체. redux 컨셉으로 사용할 객체임
-    dataList: PropTypes.array.isRequired
+    dataList: PropTypes.array.isRequired,
+    showDetail: PropTypes.bool,
   };
 
   constructor (props) {
@@ -54,17 +57,17 @@ class ChartFrame extends Component {
     }
   }
 
-  makeChartComponent = (ds, i, chartWidth, chartHeight) => {
-    const { appData } = this.props;
+  makeChartComponent = (rds, i, chartWidth, chartHeight) => {
+    const { appData, showDetail } = this.props;
     const { drawKey } = this.state;
-
     const { X, Y1, Y2 } = appData.getChartOption();
-    const chartData = convertToChartData({ ds, time: X, y1: Y1, y2: Y2 }, appData.getColorMap());
+
+    const chartData = convertToChartData({ ds: new BasicDataSource(rds), time: X, y1: Y1, y2: Y2 }, appData.getColorMap());
 
     return (
-      <div key={`chart${i}-${drawKey}`} style={{ flexBasis:`${chartWidth}px`}}>
+      <div key={`chart-${i}-${drawKey}`} style={{ flexBasis:`${chartWidth}px`}}>
         <RunTooltipChart
-          title={ds.title}
+          title={rds.title}
           data={chartData}
           showingRangeY1={appData.getExtentY(0)}
           showingRangeY2={appData.getExtentY(1)}
@@ -72,6 +75,9 @@ class ChartFrame extends Component {
           width={chartWidth} height={chartHeight}
           markerData={appData.getMarkerList(i)}
           onEvent={this.handleChartEvent(i)}
+          appData={appData}
+          compCode={rds.code}
+          showDetail={showDetail}
         />
       </div>
     );
@@ -87,7 +93,7 @@ class ChartFrame extends Component {
 
     return (
       <div ref={this._mainDiv} className="chartFrame">
-        { dataList.map((ds, i) => this.makeChartComponent(ds, i, chartWidth, chartHeight)) }
+        { dataList.map((rds, i) => this.makeChartComponent(rds, i, chartWidth, chartHeight)) }
       </div>
     );
   }

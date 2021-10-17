@@ -56,7 +56,10 @@ public enum AppResource
             {
                 String[] ar = UsefulTool.SplitLineText(lineText, "\t", false, true);
                 
-                itemMap.put(ar[0], ar);
+                if( ar[0].endsWith("0") && !ar[0].startsWith("9") )
+                {
+                    itemMap.put(ar[0], ar);
+                }
                 
                 lineText = in.getNextLine();
             }

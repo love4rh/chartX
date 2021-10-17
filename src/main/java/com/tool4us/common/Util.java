@@ -1,10 +1,18 @@
 package com.tool4us.common;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.tool4us.net.http.TomyRequestor;
 
 import lib.turbok.common.ITabularData;
 import lib.turbok.data.Column;
@@ -327,5 +335,137 @@ public enum Util
         }
         
         return sb.toString();
+    }
+    
+    public String generateMD5(String data)
+    {
+        String mdCode = "";
+
+        try
+        {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(data.getBytes());
+
+            byte[] bytes = md.digest();
+            
+            StringBuilder sb = new StringBuilder();
+
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            
+            mdCode = sb.toString();
+        }
+        catch( Exception xe )
+        {
+            
+        }
+        
+        return mdCode;
+    }
+    
+    public String generateSHA256(String data)
+    {
+        String mdCode = "";
+
+        try
+        {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(data.getBytes());
+
+            byte[] bytes = md.digest();
+            
+            StringBuilder sb = new StringBuilder();
+
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            
+            mdCode = sb.toString();
+        }
+        catch( Exception xe )
+        {
+            
+        }
+        
+        return mdCode;
+    }
+    
+    public boolean checkAuthCode(TomyRequestor req, boolean first)
+    {
+        String authCode = req.getHeaderValue("x-auth-code");
+        String userRandom = req.getHeaderValue("x-user-token");
+        String timestamp = req.getHeaderValue("x-timestamp");
+        
+        if( authCode == null || authCode.isEmpty() 
+            || userRandom == null || userRandom.isEmpty()
+            || timestamp == null || timestamp.isEmpty() )
+        {
+            return false;
+        }
+        
+        String compCode = first
+            ? generateSHA256(timestamp + userRandom + timestamp)
+            : generateSHA256(timestamp + userRandom + timestamp); // TODO user-token별 발급된 코드를 활용하도록 수정
+        
+        return authCode.equals(compCode);
+    }
+    
+    public String encodeBase64(String msg)
+    {
+        byte[] target = msg.getBytes();
+        
+        Encoder encoder = Base64.getEncoder();
+        byte[] encodedBytes = encoder.encode(target);
+
+        return new String(encodedBytes);
+    }
+    
+    public String decodeBase64(String encoded)
+    {
+        byte[] target = encoded.getBytes();
+        
+        Decoder decoder = Base64.getDecoder();
+        byte[] decodedBytes = decoder.decode(target);
+        
+        return new String(decodedBytes);
+    }
+    
+    public String encodeURIComponent(String s)
+    {
+        String result = null;
+   
+        try
+        {
+            result = URLEncoder.encode(s, "UTF-8")
+               .replaceAll("\\+", "%20")
+               .replaceAll("\\%21", "!")
+               .replaceAll("\\%27", "'")
+               .replaceAll("\\%28", "(")
+               .replaceAll("\\%29", ")")
+               .replaceAll("\\%7E", "~");
+        }
+        catch( Exception xe )
+        {
+            result = s;
+        }
+   
+        return result;
+    }
+    
+    public String decodeURIComponent(String s)
+    {
+        String r = null;
+        
+        try
+        {
+            r = URLDecoder.decode(s, "UTF-8");
+        }
+        catch(Exception xe)
+        {
+            r = s;
+        }
+        
+        return r;
     }
 }

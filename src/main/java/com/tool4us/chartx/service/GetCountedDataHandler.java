@@ -29,10 +29,8 @@ public class GetCountedDataHandler extends ApiHandler
     {
         int _xColumn = OPT.getChartX();
         int[][] _yList = OPT.getChartY();
-        
-        String authCode = req.getHeaderValue("x-auth-code");
-        
-        if( !OPT.checkAuthCode(authCode) )
+
+        if( !UT.checkAuthCode(req, false) )
             return makeResponseJson(ApiError.InvalidAuthCode);
         
         String countStr = req.getParameter("count");
@@ -78,7 +76,8 @@ public class GetCountedDataHandler extends ApiHandler
         String title = RES.getCodeTitle(pCode);
         for(long r = missing; r < dataCount; r += shownCount)
         {
-            String dataBlock = ChartTool.makeDataBlock(title, r, Math.min(r + shownCount, dataCount), ds, extentMap);
+            String dataBlock = ChartTool.makeDataBlock(
+                title, pCode, r, Math.min(r + shownCount, dataCount), ds, extentMap);
 
             if( dataBlock != null )
             {

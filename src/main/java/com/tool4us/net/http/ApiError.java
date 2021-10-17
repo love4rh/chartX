@@ -23,6 +23,7 @@ public enum ApiError
 
     NotExistsResult(3001, "not exists the result"),
     OverCapacityLimit(3002, "over capacity limit"),
+    NotReadyData(3003, "not ready data"),
 
     NeedRerequest(9001, "need to request again"),
     

@@ -18,7 +18,7 @@ public class PingHandler extends ApiHandler
         // 있다면 정상 루틴 실행
         JSONObject retObj = new JSONObject();
 
-        retObj.put("greetings", "Hello pingger!!");
+        retObj.put("greetings", "Hello Pingger!!");
         
         return makeResponseJson(retObj);
     }

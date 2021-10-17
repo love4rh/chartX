@@ -2,12 +2,20 @@ package com.tool4us.chartx.util;
 
 import static com.tool4us.chartx.AppSetting.OPT;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.tool4us.common.Logs;
+
 import lib.turbok.common.ValueType;
 import lib.turbok.data.FileMapStore;
+import lib.turbok.dataon.client.Connection;
+import lib.turbok.dataon.client.RecordSet;
 
 
 
@@ -70,7 +78,8 @@ public class ChartTool
         return true;
     }
     
-    public static String makeDataBlock( String title, long startRow, long endRow, FileMapStore ds
+    public static String makeDataBlock( String title, String code
+                                      , long startRow, long endRow, FileMapStore ds
                                       , Map<Integer, double[]> extentMap ) throws Exception
     {
         int _suggestIdx  = OPT.getChartSuggest();
@@ -82,6 +91,7 @@ public class ChartTool
 
         sb.append("{");
         sb.append("\"title\":\"").append(title).append("\"");
+        sb.append(",\"code\":\"").append(code).append("\"");
         sb.append(",\"columns\":[");
 
         for(int i = 0; i < _fetchColumns.length; ++i)
@@ -208,7 +218,8 @@ public class ChartTool
     }
     
     
-    public static int attachAnnualDataBlock( StringBuilder sb, String title, FileMapStore ds, Map<Integer, double[]> extentMap ) throws Exception
+    public static int attachAnnualDataBlock( StringBuilder sb, String title, String code
+                                           , FileMapStore ds, Map<Integer, double[]> extentMap ) throws Exception
     {
         int count = 0;
         long bi = -1;
@@ -235,7 +246,7 @@ public class ChartTool
                 if( assigned )
                     sb.append(",");
                 
-                sb.append( makeDataBlock(title + " @" + year, bi, r, ds, extentMap) );
+                sb.append( makeDataBlock(title + " @" + year, code, bi, r, ds, extentMap) );
                 assigned = true;
                 count += 1;
 
@@ -249,10 +260,97 @@ public class ChartTool
             if( assigned )
                 sb.append(",");
             
-            sb.append( makeDataBlock(title + " @" + year, bi, ds.getRowSize(), ds, extentMap) );
+            sb.append( makeDataBlock(title + " @" + year, code, bi, ds.getRowSize(), ds, extentMap) );
             count += 1;
         }
         
         return count;
+    }
+    
+    public static int runLogic(String compCode) throws Exception
+    {
+        int retCode = 0;
+        
+        Runtime rt = Runtime.getRuntime();
+        Process pc = null;
+        
+        Logs.info("run process to make data of {}", compCode);
+        
+        try
+        {
+            String command = "java  -Dfile.encoding=utf8 -Duser.timezone=GMT -jar "
+                    + OPT.getCrawlegoJar() + " \"" + OPT.getLogicFile() + "\" "
+                    + "\"COMP_CODE=" + compCode + "\" ";
+
+            pc = rt.exec(command);            
+        }
+        catch(Exception xe)
+        {
+            retCode = -1;
+        }
+        finally
+        {
+            retCode = pc.waitFor();
+            pc.destroy();
+        }
+        
+        Logs.info("process for {} returns {}", compCode, retCode);
+        
+        return retCode;   
+    }
+    
+    public static JSONObject queryPrice(List<String> codes, List<String> dateStr)
+    {
+        Connection conn = null;
+        JSONObject obj = new JSONObject();
+        
+        try
+        {
+           conn = new Connection( OPT.getDOServer(), OPT.getDOPort(), "admin", "1234" );
+           conn.setCollectionToUse("PRICE");
+
+           for(int k = 0; k < dateStr.size(); ++k)
+           {
+               StringBuilder sb = new StringBuilder();
+               
+               sb.append("SELECT 종목코드, 날짜, 시가, 종가  FROM Y").append(dateStr.get(k).substring(0, 4))
+                 .append(" WHERE 날짜 = '").append(dateStr.get(k)).append("' AND 종목코드 IN (");
+
+               for(int i = 0; i < codes.size(); ++i)
+               {
+                   if( i > 0 ) sb.append(",");
+                   sb.append("'").append(codes.get(i)).append("'");
+               }
+               
+               sb.append(")");
+               
+               RecordSet rs = conn.executeQuery(sb.toString(), false, 128);
+               
+               while( rs.next() )
+               {
+                   String key = rs.getValue(1) + "@" + rs.getValue(2);
+                   
+                   JSONArray ar = new JSONArray();
+                   
+                   ar.put(rs.getValue(3));
+                   ar.put(rs.getValue(4));
+                   
+                   obj.put(key, ar);
+               }
+               
+               rs.close();
+           }
+        }
+        catch( Exception xe )
+        {
+            Logs.trace(xe);
+        }
+        finally
+        {
+            if( conn != null )
+                conn.close();
+        }
+        
+        return obj;
     }
 }

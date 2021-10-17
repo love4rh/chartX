@@ -6,14 +6,19 @@ import * as d3 from 'd3';
 import { makeid, isundef, isvalid, istrue, numberWithCommas } from '../grid/common.js';
 
 import { IoMdOptions } from 'react-icons/io';
-import { RiCheckboxBlankLine, RiCheckboxLine } from 'react-icons/ri';
+import { SiNaver } from "react-icons/si";
+import { RiCheckboxBlankLine, RiCheckboxLine, RiHeartFill, RiHeartLine, RiLineChartLine, RiEditBoxLine } from 'react-icons/ri';
 
 import { RangeSlider, sliderSize } from '../component/RangeSlider.js';
 
 import { OptionPanel } from './OptionPanel.js';
+import { MemoPanel } from './MemoPanel.js';
 
 import './styles.scss';
 
+
+const hideModeOn = false; // 차트 제목, 시리즈 이름 등을 가림
+const checkModeOn = false; // 첫 번째 시리즈를 가림
 
 
 /**
@@ -34,12 +39,18 @@ class RunTooltipChart extends Component {
     withYSlider: PropTypes.bool, // 데이터 조정을 위한 슬라이더 포함 여부 (세로축)
     withLegend: PropTypes.bool, // 범례 표시 여부
     markerData: PropTypes.array, // Marker 데이터. [{ point:[ Marking 할 X 축 인덱스, ...], color:'red' }, ... ]. Y는 첫 번째 시리즈의 값을 이용함
+    appData: PropTypes.object,
+    compCode: PropTypes.string, // My Company 여부
+    showDetail: PropTypes.bool, // 종목 차트 보기 버튼 표시 여부
   }
 
   constructor(props) {
     super(props);
 
-    const { width, height, data, showingRangeX, showingRangeY1, showingRangeY2, withLegend, markerData } = this.props;
+    const {
+      width, height, data, showingRangeX, showingRangeY1, showingRangeY2,
+      withLegend, markerData, appData, compCode
+    } = this.props;
 
     const withSlider = istrue(this.props.withSlider);
     const withYSlider = istrue(this.props.withYSlider);
@@ -55,13 +66,11 @@ class RunTooltipChart extends Component {
     const yData = [];
     data.yData.map((dl, idx) => {
       dl.map(dd => {
-        yData.push({ ...dd, shown:true, useY2:(idx > 0) });
+        yData.push({ ...dd, shown: (!checkModeOn || yData.length > 0), useY2: (idx > 0) }); // TODO yData.length > 0 --> true
         return true;
       });
       return true;
     });
-
-    // console.log('ydata', yData);
 
     this.state = {
       compID: 'tk' + makeid(8),
@@ -79,7 +88,9 @@ class RunTooltipChart extends Component {
       userY1Extent: showingRangeY1,
       userY2Extent: showingRangeY2,
       markerData,
-      optionPanelOn: false
+      optionPanelOn: false,
+      memoPanelOn: false,
+      favorite: appData.isFavorite(compCode)
     };
 
     // console.log('RunChart construct', this.state);
@@ -269,8 +280,8 @@ class RunTooltipChart extends Component {
     const focusDivID = compID + '_focus';
     const overlayDivID = compID + '_overlay';
 
-    d3.select('.' + guideID).remove();
-
+    d3.selectAll('.' + guideID).remove();
+  
     if( useY2 ) {
       const zeroPos =  axesY[1]['scale'](0);
 
@@ -388,7 +399,7 @@ class RunTooltipChart extends Component {
     } // end of callback for showing tooptip
 
 
-    let mouseDown = false;
+    let mouseDown = -1; // -1: not mouse down, -2: need define down point, 0이상: 시작 포인트
 
     // 마우스 클릭시 나타날 툴팁
     const tooltipDivID = compID + '_tooltip';
@@ -417,18 +428,32 @@ class RunTooltipChart extends Component {
 
       tooltipBox.append('div')
         .classed('tooltipItem', true)
-        .text(`${xLabel}: ${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1})`); // TODO DateTime 처리
+        .text(`${xLabel}: ${xData ? xData[dataIdx] : dataIdx} (${dataIdx + 1}${mouseDown >= 0 ? '/' + (dataIdx - mouseDown) : ''})`); // TODO DateTime 처리
 
       yData.map(dd => {
-        tooltipBox.append('div')
-          .classed('tooltipItem', true)
-          .style('color', dd.color)
-          .text(`${dd.title}: ${numberWithCommas(Math.round(dd.data[dataIdx] * 10000) / 10000)}`);
+        const cv = Math.round(dd.data[dataIdx] * 10000) / 10000;
+        const tipTag = tooltipBox.append('div').classed('tooltipItem', true).style('color', dd.color);
+
+        if( mouseDown >= 0 ) {
+          const pv = Math.round(dd.data[mouseDown] * 10000) / 10000;
+          if( dd.title.startsWith('SLOPE') ) {
+            tipTag.text(`${dd.title}: ${numberWithCommas(cv)} (${numberWithCommas(Math.round((cv - pv) * 1000) / 1000 )})`);
+          } else {
+            tipTag.text(`${dd.title}: ${numberWithCommas(cv)} (${numberWithCommas(Math.round(cv / pv * 1000) / 1000 )})`);
+          }
+        } else {
+          tipTag.text(`${dd.title}: ${numberWithCommas(cv)}`);
+        }
+
         return true;
       });
 
+      if( mouseDown === -2 ) {
+        mouseDown = dataIdx;
+      }
+
       const guideBoxWidth = 125 + 10;
-      const guideBoxHeight = yData.length * 24 + 10;
+      const guideBoxHeight = yData.length * 28 + 10;
       const maxX = chartTag.offsetLeft + chartTag.offsetWidth;
       const maxY = chartTag.offsetTop + chartTag.offsetHeight;
       const pX = ev.clientX + guideBoxWidth + margin.LEFT > maxX ? ev.clientX - guideBoxWidth + 5 : ev.clientX + 10;
@@ -450,12 +475,12 @@ class RunTooltipChart extends Component {
       })
       .on('mousemove', (ev) => {
         cbGuiderShown(ev);
-        if( mouseDown ) {
+        if( mouseDown !== -1 ) {
           cbTooltipShown(ev);
         }
       })
-      .on('mousedown', () => mouseDown = true )
-      .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
+      .on('mousedown', () => mouseDown = -2 )
+      .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = -1; } )
     ;// end of overlay
 
     const clipBoxID = compID + '_clip';
@@ -484,8 +509,8 @@ class RunTooltipChart extends Component {
         .classed(lineID, true)
         .on('mouseenter', () => d3.select('.' + lineID).classed('selectedLine', true) )
         .on('mouseleave',  () => d3.select('.' + lineID).classed('selectedLine', false) )
-        .on('mousedown', () => mouseDown = true )
-        .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
+        .on('mousedown', () => mouseDown = -2 )
+        .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = -1; } )
         .attr('fill', 'none')
         .attr('stroke', dd.color)
         .attr('stroke-width', '2px')
@@ -519,8 +544,8 @@ class RunTooltipChart extends Component {
             .attr('fill', md.color)
             .attr('stroke', 'black')
             .attr('stroke-width', '1')
-            .on('mousedown', () => mouseDown = true )
-            .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = false; } )
+            .on('mousedown', () => mouseDown = -2 )
+            .on('mouseup', () => { tooltipBox.style('display', 'none'); mouseDown = -1; } )
           ;
           return true;
         });
@@ -565,11 +590,60 @@ class RunTooltipChart extends Component {
 
   handleClickOption = () => {
     const { optionPanelOn } = this.state;
+    this.setState({ optionPanelOn: !optionPanelOn, memoPanelOn: false });
+  }
 
-    if( optionPanelOn ) {
-      this.setState({ optionPanelOn: false });
-    } else {
-      this.setState({ optionPanelOn: true });
+  handleOptionPanel = (type, userExtent) => {
+    let update = false;
+    const newState = { optionPanelOn: false, memoPanelOn: false };
+
+    if( 'apply' === type ) {
+      newState['userY1Extent'] = userExtent[0];
+      if( userExtent.length >= 2 ) {
+        newState['userY2Extent'] = userExtent[1];
+      }
+      update = true;
+    }
+
+    this.setState(newState);
+
+    if( update ) { this.updateD3Chart(); }
+  }
+
+  handleMemoPanel = (type, comment) => {
+    const { appData, compCode } = this.props;
+    const newState = { optionPanelOn: false, memoPanelOn: false };
+
+    if( 'add' === type ) { // 코멘트 추가
+      appData.addComment(compCode, comment);
+    } else if( 'remove' === type ) { // 코멘트 모두 삭제
+      //
+    }
+    
+    this.setState(newState);
+  }
+
+  handleTitleClick = () => {
+    const { appData, compCode } = this.props;
+    const { favorite } = this.state;
+
+    appData.setFavorite(compCode, !favorite);
+    this.setState({ favorite: !favorite });
+  }
+
+  handleMenuClick = (type) => () => {
+    const { compCode } = this.props;
+
+    if( 'naver' === type ) {
+      window.open(`https://finance.naver.com/item/main.naver?code=${compCode}`, '_blank');
+    } else if( 'jump' === type ) {
+      // appData.gotoPage(compCode);
+      const url = window.location.href;
+      const pRoot = url.indexOf('/', 10);
+      window.open(url.substring(0, pRoot) + '/year/' + compCode, '_blank');
+    } else if( 'memo' === type ) {
+      const { memoPanelOn } = this.state;
+      this.setState({ optionPanelOn: false, memoPanelOn: !memoPanelOn });
     }
   }
 
@@ -594,17 +668,17 @@ class RunTooltipChart extends Component {
     }
 
     return (
-      <OptionPanel extentData={extentData} />
+      <OptionPanel extentData={extentData} onApply={this.handleOptionPanel} />
     );
   }
 
   render () {
-    const { width, title } = this.props;
+    const { width, title, showDetail, appData, compCode } = this.props;
     const {
       data, chartDiv, margin,
       withSlider, withYSlider, withLegend,
       useY2, userXExtent, userY1Extent, userY2Extent,
-      optionPanelOn
+      optionPanelOn, memoPanelOn, favorite
     } = this.state;
     const { xData, yData, dateTimeAxis, extentX, extentY1, extentY2 } = data;
 
@@ -614,9 +688,21 @@ class RunTooltipChart extends Component {
     return (
       <div className="chartMain">
         <div className="chartHeader">
-          <div className="chartTitleDiv">{title}</div>
-          <div className="chartOption" style={{ right:margin.RIGHT }} onClick={this.handleClickOption}><IoMdOptions size="24" /></div>
-          { optionPanelOn && <div className="chartOptionPanel">{ this.renderOptionPanel() } </div> }
+          <div className="chartTitleDiv">
+            {hideModeOn ? 'title' : title}
+            { favorite  && <div className="chartFavorite" onClick={this.handleTitleClick}><RiHeartFill size="22"/></div> }
+            { !favorite && <div className="chartNoFavorite" onClick={this.handleTitleClick}><RiHeartLine size="22"/></div> }
+          </div>
+          { showDetail && <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 132 }} onClick={this.handleMenuClick('jump')}><RiLineChartLine size="22" /></div> }
+          <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 88 }} onClick={this.handleMenuClick('memo')}><RiEditBoxLine size="22" /></div>
+          <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 44 }} onClick={this.handleMenuClick('naver')}><SiNaver size="22" /></div>
+          <div className="chartOption btnColor01" style={{ right:margin.RIGHT }} onClick={this.handleClickOption}><IoMdOptions size="22" /></div>
+          { optionPanelOn && <div className="chartOptionPanel" style={{ width: 300 }}>{ this.renderOptionPanel() } </div> }
+          { memoPanelOn &&
+            <div className="chartOptionPanel" style={{ width: 380, height: 270 }}>
+              <MemoPanel appData={appData} compCode={compCode} onApply={this.handleMemoPanel} />
+            </div> 
+          }
         </div>
         { withLegend &&
           <div className="legendBox" style={{ width:`${width}px` }}>
@@ -631,7 +717,7 @@ class RunTooltipChart extends Component {
                     { dd.shown ? <RiCheckboxLine size="18" /> : <RiCheckboxBlankLine size="18" /> }
                   </div>
                   <div className="legendTitle">
-                    { dd.title }
+                    { hideModeOn ? `Series-${idx}` : dd.title }
                   </div>
                 </div>
               );
