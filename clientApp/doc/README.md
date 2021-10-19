@@ -1,5 +1,5 @@
 # Packages
-yarn add node-sass@4.14.1 react-bootstrap bootstrap react-icons d3 axios
+yarn add node-sass@4.14.1 react-bootstrap bootstrap react-icons d3 axios react-datepicker styled-components
 
 
 # Getting Started with Create React App

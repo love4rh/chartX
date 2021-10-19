@@ -96,6 +96,13 @@ export const dateToString = (dt, withMilli) => {
     + ' ' + [ pad2(hh), pad2(mm), pad2(ss) ].join(':') + (istrue(withMilli) ? '.' + pad3(mi) : '');
 }
 
+export const dateToYYYYMMDD = (dt) => {
+  const MM = dt.getMonth() + 1; // getMonth() is zero-based
+  const dd = dt.getDate();
+
+  return [ dt.getFullYear(), pad2(MM), pad2(dd) ].join('');
+}
+
 /**
  * 객체 obj에 method가 있으면 호출한 결과를 반환하고 없으면 null 반환
  * @param {*} obj 
@@ -237,4 +244,9 @@ export const extent = (list) => {
 
 export const cp = (obj) => {
   return JSON.parse(JSON.stringify(obj));
+}
+
+
+export const yyymmddToHuman = (dt) => {
+  return dt.substring(0, 4) + '-' + dt.substring(4, 6) + '-' + dt.substring(6, 8);
 }

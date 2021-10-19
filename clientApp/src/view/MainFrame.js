@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { isvalid, isundef, makeid, setGlobalMessageHandle } from '../util/tool.js';
 
-import { RiArrowGoBackFill, RiRefreshLine } from 'react-icons/ri';
+import { RiArrowGoBackFill, RiRefreshLine, RiMenuAddLine, RiMenuLine } from 'react-icons/ri';
 import { GoTriangleLeft, GoTriangleRight } from 'react-icons/go';
 
 import { ImTable2, ImStatsDots } from "react-icons/im";
@@ -47,6 +47,7 @@ class MainFrame extends Component {
       dataList: [],
       asTable: true,
       favData: {},
+      guessAll: false,
     };
 
     this._mainDiv = React.createRef();
@@ -128,9 +129,9 @@ class MainFrame extends Component {
   }
 
   fetchGuessBP = (page, cb) => {
-    const { appData } = this.state;
+    const { appData, guessAll } = this.state;
 
-    appData.fetchBuyPointData(page, (isOk) => {
+    appData.fetchBuyPointData(guessAll, page, (isOk) => {
       if( cb ) { cb(isOk); }
 
       if( isOk ) {
@@ -238,14 +239,20 @@ class MainFrame extends Component {
     }
   }
 
-  switchShowType = () => {
+  toggleGuessAll = () => {
+    const { guessAll } = this.state;
+    this.setState({ pageNo: 0, guessAll: !guessAll });
+    this.fetchInitialData();
+  }
+
+  toggleShowType = () => {
     const { asTable } = this.state;
     this.setState({ asTable: !asTable });
   }
 
   render () {
     const {
-      drawKey, cw, pageType, message, appData, compCode, compType, dataList, pageNo, totalPage, asTable, favData
+      drawKey, cw, pageType, message, appData, compCode, compType, dataList, pageNo, totalPage, asTable, favData, guessAll
     } = this.state;
 
     const toastOn = isvalid(message);
@@ -295,9 +302,13 @@ class MainFrame extends Component {
                 <div className="mainMenuSeparator" />
               </div>
             }
+            { pageType === 'guessBP' && <div className="mainMenuButton" onClick={this.toggleGuessAll}>
+              { guessAll ? <RiMenuLine size="24" /> : <RiMenuAddLine size="24" /> }
+              </div>
+            }
             { pageType === 'year' && <div className="mainMenuButton" onClick={this.fetchInitialData}><RiRefreshLine size="24" /></div> }
             { pageType === 'interest' &&
-              <div className="mainMenuButton" onClick={this.switchShowType}>{ tableOn ? <ImStatsDots size="22" /> : <ImTable2 size="22" /> }</div>
+              <div className="mainMenuButton" onClick={this.toggleShowType}>{ tableOn ? <ImStatsDots size="22" /> : <ImTable2 size="22" /> }</div>
             }
             <div className="mainMenuButton" onClick={this.handleGoBack}><RiArrowGoBackFill size="24" /></div>
           </div>

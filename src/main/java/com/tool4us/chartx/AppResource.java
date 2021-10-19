@@ -23,6 +23,7 @@ public enum AppResource
     private Map<String, String[]>   _itemCodes = new ConcurrentSkipListMap<String, String[]>();
     
     private List<String>    _bpList = null;
+    private List<String>    _newBPList = null;
     
     
     private AppResource()
@@ -79,14 +80,17 @@ public enum AppResource
     
     public void loadBuyPoint()
     {   
-        String bpFile = OPT.getBuyPointFile();
-        
+        _bpList = _loadBuyPoint( OPT.getBuyPointFile() );
+        _newBPList = _loadBuyPoint( OPT.getNewBuyPointFile() );
+    }
+    
+    public List<String> _loadBuyPoint(String bpFile)
+    {
         TextFileLineReader in = null;
+        List<String> itemList = new ArrayList<String>();
         
         try
         {
-            List<String> itemList = new ArrayList<String>();
-            
             in = new TextFileLineReader(bpFile, "UTF-8");
             String lineText = in.getNextLine(); // 제목
             
@@ -99,8 +103,6 @@ public enum AppResource
                 
                 lineText = in.getNextLine();
             }
-            
-            _bpList = itemList;
         }
         catch( Exception xe )
         {
@@ -111,6 +113,8 @@ public enum AppResource
             if( in != null )
                 in.close();
         }
+        
+        return itemList;
     }
     
     // 반환값: 단축코드(0), 표준코드, 한글 종목명(2), 한글 종목약명, 영문명, 상장일(5), 시장구분, 증권구분, 소속부, 주식종류, 액면가(10), 상장주식수, 업종(12)
@@ -126,7 +130,7 @@ public enum AppResource
         
         String[] compInfo = getCodeDetail(code);
         
-        return compInfo[3] + " (" + code + ")";
+        return (compInfo == null ? "Unknown" : compInfo[3]) + " (" + code + ")";
     }
     
     public String getCodesAsJSON()
@@ -165,9 +169,10 @@ public enum AppResource
         return sb.toString();
     }
     
-    public List<String> getBuyPointCodes()
+    // all - true: 전체, false: 신규 항목만
+    public List<String> getBuyPointCodes(boolean all)
     {
-        return _bpList;
+        return all ? _bpList : _newBPList;
     }
     
 }

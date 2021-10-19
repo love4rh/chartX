@@ -3,6 +3,7 @@ package com.tool4us.chartx.service;
 import static com.tool4us.common.Util.UT;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -13,6 +14,9 @@ import static com.tool4us.common.AccountManager.AM;
 
 import com.tool4us.net.http.TomyRequestor;
 import com.tool4us.net.http.TomyResponse;
+
+import lib.turbok.util.UsefulTool;
+
 import com.tool4us.chartx.util.ChartTool;
 import com.tool4us.net.http.ApiError;
 import com.tool4us.net.http.ApiHandler;
@@ -46,6 +50,10 @@ public class GetFavoritesHandler extends ApiHandler
         
         JSONObject commentObj = new JSONObject();
         
+        String yyyymmdd = UsefulTool.ConvertDateToString(new Date(), "yyyyMMdd");
+        
+        dateSet.add(yyyymmdd);
+
         Set<String> codes = fav.keySet();
         
         for(String code : codes)
@@ -57,6 +65,11 @@ public class GetFavoritesHandler extends ApiHandler
             {
                 dateSet.add(obj.getString("created"));
                 dateSet.add(obj.getString("modified"));
+                
+                if( obj.has("last") )
+                {
+                    dateSet.add(obj.getString("last"));
+                }
             }
             
             String comment = AM.getComments(id, code);
@@ -77,6 +90,7 @@ public class GetFavoritesHandler extends ApiHandler
         retObj.put("favorites", fav);
         retObj.put("price", priceObj);
         retObj.put("comment", commentObj);
+        retObj.put("lastDate", yyyymmdd);
 
         return makeResponseJson(retObj);
     }

@@ -60,10 +60,10 @@ const apiProxy = {
 		});
 	},
 
-	getBuyPointData: (page, cbOk, cbErr) => {
+	getBuyPointData: (all, page, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
-		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}&count=20`, {
+		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}&count=20&all=${all}`, {
 			headers: apiProxy.genHeader()
 		}).then(res => {
 			console.log('CHECK - BP', res);

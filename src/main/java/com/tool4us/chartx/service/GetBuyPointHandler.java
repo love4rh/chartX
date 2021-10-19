@@ -37,12 +37,13 @@ public class GetBuyPointHandler extends ApiHandler
         String pageStr = req.getParameter("pageNo");
         String countInPage = req.getParameter("count");
         String dpCount = req.getParameter("displyCount");
+        String all = req.getParameter("all");
         
         int pageNo = pageStr == null || pageStr.isEmpty() ? 0 : Integer.parseInt(pageStr);
         int count = countInPage == null || countInPage.isEmpty() ? 10 : Integer.parseInt(countInPage);
         int shownCount = dpCount == null || dpCount.isEmpty() ? 350 : Integer.parseInt(dpCount);
         
-        List<String> codes = RES.getBuyPointCodes();
+        List<String> codes = RES.getBuyPointCodes( !"false".equals(all) );
         
         int totalPage = codes.size() / count + (0 != (codes.size() % count) ? 1 : 0); 
 

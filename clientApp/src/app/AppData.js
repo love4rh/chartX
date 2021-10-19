@@ -210,8 +210,8 @@ class AppData {
     console.log('APPDATA ERR', err);
   }
 
-  fetchBuyPointData = (page, cb) => {
-    apiProxy.getBuyPointData(page,
+  fetchBuyPointData = (all, page, cb) => {
+    apiProxy.getBuyPointData(all, page,
       (res) => {
         if( 0 === res.returnCode ) {
           const { data, chart, colorMap, extentY1, extentY2, page, total } = res.response;
