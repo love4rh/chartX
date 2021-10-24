@@ -248,5 +248,17 @@ export const cp = (obj) => {
 
 
 export const yyymmddToHuman = (dt) => {
+  if( isundef(dt) ) {
+    return '-';
+  }
+  
   return dt.substring(0, 4) + '-' + dt.substring(4, 6) + '-' + dt.substring(6, 8);
 }
+
+
+// dt: Date
+// 출처: https://jaimemin.tistory.com/1432
+export const getDayName = (dt) => {
+  return dt.toLocaleDateString('ko-KR', { weekday: 'long', }).substr(0, 1);
+}
+

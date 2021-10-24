@@ -1,4 +1,12 @@
+# react 강의
+http://react.vlpt.us/basic/09-multiple-inputs.html
 
+
+# react component를 normal html에서 사용하기
+https://ko.reactjs.org/docs/add-react-to-a-website.html
+
+
+# 기타
 d3.schemeTableau10
 
 0: "#4e79a7"

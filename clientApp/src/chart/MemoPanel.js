@@ -67,15 +67,18 @@ class MemoPanel extends Component {
     if( 'add' === type ) {
       appData.addComment(compCode, newComment, (msg) => {
         this.setState({ memoText: msg, newComment: '' });
+        if( onApply ) {
+          onApply(type, msg);
+        }
       });
     } else if( 'remove' === type ) {
       appData.removeComment(compCode, () => {
         if( onApply ) {
-          onApply(type, newComment);
+          onApply(type);
         }
       });
     } else if( onApply ) {
-      onApply(type, newComment);
+      onApply(type);
     }
   }
 

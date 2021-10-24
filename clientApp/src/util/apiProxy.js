@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { makeid, isundef, tickCount, SHA256, isvalid } from '../util/tool.js';
+import { makeid, istrue, isundef, tickCount, SHA256, isvalid } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
 export const _serverBaseUrl_ = 'https://gx.tool4.us';
@@ -51,7 +51,7 @@ const apiProxy = {
 			headers: apiProxy.genHeader(),
 			data: { id: uid, pw: SHA256(SHA256(pw) + '/' + _userToken) }
 		}).then(res => {
-			console.log('CHECK - SI', res);
+			// console.log('CHECK - SI', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -66,7 +66,7 @@ const apiProxy = {
 		axios.get(`${_serverBaseUrl_}/gbp?pageNo=${isundef(page) ? '0' : page}&count=20&all=${all}`, {
 			headers: apiProxy.genHeader()
 		}).then(res => {
-			console.log('CHECK - BP', res);
+			// console.log('CHECK - BP', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -81,7 +81,7 @@ const apiProxy = {
 		axios.get(`${_serverBaseUrl_}/ctx?pCode=${compCode}&count=${count}`, {
 			headers: apiProxy.genHeader()
 		}).then(res => {
-			console.log('CHECK - CNT', res);
+			// console.log('CHECK - CNT', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -96,7 +96,7 @@ const apiProxy = {
 		axios.get(`${_serverBaseUrl_}/ytx?pCode=${compCode}`, {
 			headers: apiProxy.genHeader()
 		}).then(res => {
-			console.log('CHECK - YEAR', res);
+			// console.log('CHECK - YEAR', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -114,7 +114,7 @@ const apiProxy = {
 		axios.get(`${_serverBaseUrl_}/dtx?codes=${codeStr}&count=${count}`, {
 			headers: apiProxy.genHeader()
 		}).then(res => {
-			console.log('CHECK - DXT', res);
+			// console.log('CHECK - DXT', res);
 			apiProxy.leaveWaiting();
 			if( cbOk ) { cbOk(typeof res.data === 'string' ? JSON.parse(res.data) : res.data); }
 		}).catch(err => {
@@ -170,7 +170,7 @@ const apiProxy = {
 		}).then(res => {
 			apiProxy.leaveWaiting();
 			const dt = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-			console.log('CHECK - FAV', res);
+			// console.log('CHECK - FAV', res);
 			if( dt.returnCode === 0 && isvalid(dt.response) ) {
 				if( cbOk ) cbOk(dt.response);
 			} else {
@@ -183,7 +183,7 @@ const apiProxy = {
 		});
 	},
 
-	postFavorite: (uid, compCode, flag, cbOk, cbErr) => {
+	postFavorite: (uid, compCode, values, isRetuen, cbOk, cbErr) => {
 		apiProxy.enterWaiting();
 
 		axios({
@@ -192,13 +192,21 @@ const apiProxy = {
 			method: 'post',
 			timeout: 5000,
 			headers: apiProxy.genHeader(),
-			data: { id: uid, code: compCode, flag: flag }
+			data: { id: uid, code: compCode, returnData: istrue(isRetuen), values }
 		}).then(res => {
 			apiProxy.leaveWaiting();
-			if( cbOk ) { cbOk(true); }
+			const rdata = res.data;
+			// console.log('postFavorite', res);
+
+			if( rdata && rdata.returnCode === 0 ) {
+				if( cbOk ) { cbOk(rdata); }
+			} else if( cbErr ) {
+				cbErr({ returnCode: 9999 });
+			}
 		}).catch(err => {
+			// console.log('postFavorite', err);
 			apiProxy.leaveWaiting();
-			if( cbErr ) { cbErr(err); }
+			if( cbErr ) { cbErr( err ); }
 		});
 	}
 };

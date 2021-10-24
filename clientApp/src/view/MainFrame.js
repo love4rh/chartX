@@ -86,10 +86,10 @@ class MainFrame extends Component {
   }
 
   fetchInitialData = () => {
-    const { pageType, compCode, compType } = this.state;
+    const { pageType, compCode, compType, guessAll } = this.state;
 
     if( 'guessBP' === pageType ) {
-      this.fetchGuessBP(0);
+      this.fetchGuessBP(0, guessAll);
     } else if( 'year' === pageType && isvalid(compCode) ) {
       this.fetchCodeData(compCode);
     } else if( 'business' === pageType && isvalid(compType) && compType !== '' ) {
@@ -128,15 +128,17 @@ class MainFrame extends Component {
     }
   }
 
-  fetchGuessBP = (page, cb) => {
-    const { appData, guessAll } = this.state;
+  fetchGuessBP = (page, isTotal, cb) => {
+    const { appData } = this.state;
 
-    appData.fetchBuyPointData(guessAll, page, (isOk) => {
-      if( cb ) { cb(isOk); }
+    appData.fetchBuyPointData(isTotal, page, (isOk) => {
+      const pageInfo = appData.getPageInfo();
+      const newState = { drawKey: makeid(6), pageNo: page, totalPage: pageInfo[1], dataList: appData.getDataList() };
 
-      if( isOk ) {
-        const pageInfo = appData.getPageInfo();
-        this.setState({ drawKey: makeid(6), pageNo: page, totalPage: pageInfo[1], dataList: appData.getDataList() });
+      if( cb ) {
+        cb(isOk, newState);
+      } else if( isOk ) {
+        this.setState(newState);
       }
     });
   }
@@ -207,13 +209,13 @@ class MainFrame extends Component {
   }
 
   _movePage = (pNo) => {
-    const { pageNo, totalPage } = this.state;
+    const { pageNo, totalPage, guessAll } = this.state;
 
     if( pageNo === pNo || pNo < 0 || pNo >= totalPage ) {
       return false;
     }
 
-    this.fetchGuessBP(pNo);
+    this.fetchGuessBP(pNo, guessAll);
     return true;
   }
 
@@ -241,8 +243,14 @@ class MainFrame extends Component {
 
   toggleGuessAll = () => {
     const { guessAll } = this.state;
-    this.setState({ pageNo: 0, guessAll: !guessAll });
-    this.fetchInitialData();
+    const flag = !guessAll;
+
+    this.fetchGuessBP(0, flag, (isOk, newState) => {
+      if( isOk ) {
+        newState.guessAll = flag;
+        this.setState(newState);
+      }
+    });
   }
 
   toggleShowType = () => {

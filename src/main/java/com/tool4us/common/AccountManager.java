@@ -244,19 +244,30 @@ public enum AccountManager
         return dataObj;
     }
 
-    public void setFavorite(String id, String compCode, boolean isSet)
+    /**
+     * 
+     * @param id 사용자
+     * @param compCode 대상 코드
+     * @param values 변경할 값. isSet, start, last
+     */
+    public JSONObject setFavorite(String id, String compCode, JSONObject values)
     {
         final String keyName = "favorites";
-        JSONObject obj = getAcccountData(id);
-        if( obj == null || !obj.has(keyName) )
-            return;
         
-        JSONObject favorites = obj.getJSONObject(keyName);
-        if( favorites == null )
+        JSONObject accObj = getAcccountData(id);
+        if( accObj == null )
+            return null;
+        
+        JSONObject favorites = null;
+        
+        // 관심 종목 저장 객체가 없는 경우
+        if( !accObj.has(keyName) )
         {
             favorites = new JSONObject();
-            obj.put(keyName, favorites);
+            accObj.put(keyName, favorites);
         }
+        else
+            favorites = accObj.getJSONObject(keyName);
 
         String ymd = UsefulTool.ConvertDateToString(new Date(), "yyyyMMdd");
         
@@ -266,17 +277,45 @@ public enum AccountManager
             compObj = new JSONObject();
             favorites.put(compCode, compObj);
             compObj.put("created", ymd);
+            compObj.put("start", ymd);
+            compObj.put("isSet", true);
         }
         else
+        {
             compObj = favorites.getJSONObject(compCode);
+            // 초반에 등록된 애들은 없을 수 있어서 방어코드로 넣었음.
+            if( !compObj.has("start") )
+            {
+                compObj.put("start", compObj.get("modified"));
+            }
+        }
         
-        // 설정 여부, 최초 등록일, 마지막 수정일, 카테고리(태깅)
-        compObj.put("isSet", isSet);
         compObj.put("modified", ymd);
         
+        // Favorite 여부, 관심일, 종료일
+        final String[] keys = new String[] { "isSet", "start", "last" };
+        
+        // Favorite에서 빠지는 경우임
+        if( values.has(keys[0]) && !values.getBoolean(keys[0]) )
+        {
+            // 히스토리에 현재 Favorite 상태를 넣고 여기서는 삭제합시다.
+            pushFavoriteToHistory(accObj, compCode, compObj);
+            favorites.remove(compCode);
+        }
+        else
+        {
+            for(String kn : keys)
+            {
+                if( values.has(kn) )
+                    compObj.put(kn, values.get(kn));
+            }
+        }
+        
         _accountModified.put(id, true);
+        
+        return compObj;
     }
-    
+
     public JSONObject getFavorites(String id)
     {
         final String keyName = "favorites";
@@ -285,6 +324,36 @@ public enum AccountManager
             return null;
         
         return obj.getJSONObject(keyName);
+    }
+    
+    private void pushFavoriteToHistory(JSONObject accObj, String compCode, JSONObject compObj)
+    {
+        final String keyName = "favHistory";
+        
+        JSONObject history = null;
+        
+        if( accObj.has(keyName) )
+        {
+            history = accObj.getJSONObject(keyName);
+        }
+        else
+        {
+            history = new JSONObject();
+            accObj.put(keyName, history);
+        }
+        
+        JSONArray compHistory = null;
+        if( history.has(compCode) )
+        {
+            compHistory = history.getJSONArray(compCode);
+        }
+        else
+        {
+            compHistory = new JSONArray();
+            history.put(compCode, compHistory);
+        }
+
+        compHistory.put( new JSONObject(compObj.toString()) ); // 복사해서 넣기
     }
     
     public String getComments(String id, String pCode)

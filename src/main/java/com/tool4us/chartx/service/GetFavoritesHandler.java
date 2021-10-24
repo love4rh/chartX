@@ -63,8 +63,10 @@ public class GetFavoritesHandler extends ApiHandler
             
             if( obj.getBoolean("isSet") )
             {
-                dateSet.add(obj.getString("created"));
-                dateSet.add(obj.getString("modified"));
+                if( obj.has("start" ))
+                    dateSet.add(obj.getString("start"));
+                else
+                    dateSet.add(obj.getString("modified"));
                 
                 if( obj.has("last") )
                 {

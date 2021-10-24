@@ -2,6 +2,7 @@ package com.tool4us.chartx.util;
 
 import static com.tool4us.chartx.AppSetting.OPT;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -114,7 +115,18 @@ public class ChartTool
                 minMax = extentMap.get(c);
             }
 
-            sb.append("{ \"name\":\"").append(ds.getColumnName(c)).append("\"");
+            String columnName = ds.getColumnName(c);
+            
+            if( columnName.startsWith("SLOPE/") )
+            {
+                columnName = "S" + columnName.substring(5);
+            }
+            else if( columnName.equals("PRICE") )
+            {
+                columnName = "PR";
+            }
+            
+            sb.append("{ \"name\":\"").append(columnName).append("\"");
             sb.append(", \"type\":\"").append(typeStr).append("\"");
             sb.append(", \"data\":[");
             
@@ -297,6 +309,23 @@ public class ChartTool
         Logs.info("process for {} returns {}", compCode, retCode);
         
         return retCode;   
+    }
+    
+    public static JSONObject queryPrice(String[] codes, String[] dateStr)
+    {
+        List<String> codeList = new ArrayList<String>();
+        for(String tmpStr : codes)
+        {
+            codeList.add(tmpStr);
+        }
+        
+        List<String> dateList = new ArrayList<String>();
+        for(String tmpStr : dateStr)
+        {
+            dateList.add(tmpStr);
+        }
+        
+        return queryPrice(codeList, dateList);
     }
     
     public static JSONObject queryPrice(List<String> codes, List<String> dateStr)

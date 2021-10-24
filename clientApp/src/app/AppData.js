@@ -192,7 +192,7 @@ class AppData {
   }
 
   handleDataOK = (res) => {
-    console.log('APPDATA OK', res);
+    // console.log('APPDATA OK', res);
 
     if( 0 === res.returnCode ) {
       const { data, chart, colorMap, extentY1, extentY2 } = res.response;
@@ -291,11 +291,26 @@ class AppData {
     return isvalid(pCode) && isvalid(obj) && istrue(obj.isSet);
   }
 
-  setFavorite = (pCode, flag) => {
-    this._favoriteMap[pCode] = { isSet: flag };
+  // cb가 있으면 변경된 내용을 서버에서 받아옮
+  setFavorite = (pCode, values, cb) => {
+    if( pCode in this._favoriteMap ) {
+      this._favoriteMap[pCode].isSet = istrue(values.isSet);
+    } else {
+      this._favoriteMap[pCode] = { isSet: istrue(values.isSet) };
+    }
 
     // 서버에 알리기
-    apiProxy.postFavorite(this._uid, pCode, flag);
+    apiProxy.postFavorite(this._uid, pCode, values, isvalid(cb),
+      (res) => {
+        if( res.returnCode === 0 && cb ) {
+          cb(res);
+        } else if( cb )
+          cb({ returnCode: 9999 });
+      },
+      (err) => {
+        if( cb ) cb({ err, returnCode: 9999 });
+      }
+    );
   }
 
   getFavoritesCodes = () => {
@@ -336,6 +351,10 @@ class AppData {
 
   addComment = (pCode, comment, cb) => {
     // console.log('addComment', pCode, comment, this._comments);
+    if( isundef(comment) || ('' + comment).trim().length === 0 ) {
+      return;
+    }
+
     let msg = '';
     if( pCode in this._comments ) {
       msg = this._comments[pCode];
@@ -347,10 +366,12 @@ class AppData {
       (res) => {
         msg += newMsg;
         this._comments[pCode] = msg;
-        cb(msg);
+        if( cb ) {
+          cb(msg);
+        }
       },
       (err) => {
-        cb(msg);
+        if( cb ) cb(msg);
       }
     );
   }

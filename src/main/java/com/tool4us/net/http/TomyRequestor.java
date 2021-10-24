@@ -235,32 +235,29 @@ public class TomyRequestor implements HttpRequest
         return _params;
     }
     
+    public Object bodyParameterAsObject(String paramName)
+    {
+        if( !UT.isValidString(_bodyData) )
+            return null;
+        
+        try
+        {
+            if( _jsonBody == null )
+                _jsonBody = new JSONObject(_bodyData);
+        }
+        catch(Exception xe)
+        {
+            _jsonBody = new JSONObject();
+        }
+        
+        Object oVal = _jsonBody.has(paramName) ? _jsonBody.get(paramName) : null;
+
+        return oVal;
+    }
+    
     public String bodyParameter(String paramName)
     {
-    	if( !UT.isValidString(_bodyData) )
-    		return null;
-    	
-    	try
-    	{
-	    	if( _jsonBody == null )
-	    		_jsonBody = new JSONObject(_bodyData);
-    	}
-    	catch(Exception xe)
-    	{
-    		_jsonBody = new JSONObject();
-    	}
-    	
-    	Object oVal = null;
-    	
-    	try
-    	{
-    		oVal = _jsonBody.get(paramName);
-    	}
-    	catch(Exception xe)
-    	{
-    		oVal = null;
-    	}
-    	
+        Object oVal = bodyParameterAsObject(paramName);
     	return oVal == null ? null : oVal.toString();
     }
 

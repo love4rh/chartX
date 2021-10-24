@@ -59,7 +59,7 @@ class RunTooltipChart extends Component {
 
     // data {
     // dataSize: 데이터 크기, xData: X축 데이터(없을 수 있음), yData: Y축 데이터 [Y1, Y2],
-    // dateTimeAxis: X출 시간축 여부, extentX: X축 범위, extentY: Y축 범위 목록
+    // dateTimeAxis: X축 시간축 여부, extentX: X축 범위, extentY: Y축 범위 목록
     // }
 
     const { dataSize, xData, dateTimeAxis, extentX, extentY, xLabel } = data;
@@ -436,7 +436,7 @@ class RunTooltipChart extends Component {
 
         if( mouseDown >= 0 ) {
           const pv = Math.round(dd.data[mouseDown] * 10000) / 10000;
-          if( dd.title.startsWith('SLOPE') ) {
+          if( dd.title.startsWith('S/') || dd.title.startsWith('SLOPE') ) {
             tipTag.text(`${dd.title}: ${numberWithCommas(cv)} (${numberWithCommas(Math.round((cv - pv) * 1000) / 1000 )})`);
           } else {
             tipTag.text(`${dd.title}: ${numberWithCommas(cv)} (${numberWithCommas(Math.round(cv / pv * 1000) / 1000 )})`);
@@ -532,14 +532,15 @@ class RunTooltipChart extends Component {
         .classed(markerID, true)
       ;
 
-      const y1Scale = axesY[0]['scale'];
-      const y1Data = yData[0].data;
+      // const y1Scale = axesY[0]['scale'];
+      // const y1Data = yData[0].data;
+      const zeroPos =  axesY[1]['scale'](0);
 
       markerData.map(md => {
         md.point.map(idx => {
           mg.append('circle')
             .attr('cx', xScaler(idx + 1))
-            .attr('cy', y1Scale(y1Data[idx])) // TODO 사용자 정의로 확장
+            .attr('cy', zeroPos) // y1Scale(y1Data[idx])) // TODO 사용자 정의로 확장
             .attr('r', 4)
             .attr('fill', md.color)
             .attr('stroke', 'black')
@@ -610,16 +611,14 @@ class RunTooltipChart extends Component {
     if( update ) { this.updateD3Chart(); }
   }
 
-  handleMemoPanel = (type, comment) => {
-    const { appData, compCode } = this.props;
+  // 실제 처리는 MemoPanel에서 모두 수행하고 결과만 리턴함
+  handleMemoPanel = (type, text) => {
     const newState = { optionPanelOn: false, memoPanelOn: false };
 
     if( 'add' === type ) { // 코멘트 추가
-      appData.addComment(compCode, comment);
-    } else if( 'remove' === type ) { // 코멘트 모두 삭제
-      //
+      newState.memoPanelOn = true;
     }
-    
+
     this.setState(newState);
   }
 
@@ -627,7 +626,7 @@ class RunTooltipChart extends Component {
     const { appData, compCode } = this.props;
     const { favorite } = this.state;
 
-    appData.setFavorite(compCode, !favorite);
+    appData.setFavorite(compCode, { isSet: !favorite });
     this.setState({ favorite: !favorite });
   }
 
@@ -693,13 +692,13 @@ class RunTooltipChart extends Component {
             { favorite  && <div className="chartFavorite" onClick={this.handleTitleClick}><RiHeartFill size="22"/></div> }
             { !favorite && <div className="chartNoFavorite" onClick={this.handleTitleClick}><RiHeartLine size="22"/></div> }
           </div>
-          { showDetail && <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 132 }} onClick={this.handleMenuClick('jump')}><RiLineChartLine size="22" /></div> }
-          <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 88 }} onClick={this.handleMenuClick('memo')}><RiEditBoxLine size="22" /></div>
+          <div className="chartOption btnColor01" style={{ right:margin.RIGHT + (showDetail ? 132 : 88) }} onClick={this.handleMenuClick('memo')}><RiEditBoxLine size="22" /></div>          
+          { showDetail && <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 88 }} onClick={this.handleMenuClick('jump')}><RiLineChartLine size="22" /></div> }
           <div className="chartOption btnColor01" style={{ right:margin.RIGHT + 44 }} onClick={this.handleMenuClick('naver')}><SiNaver size="22" /></div>
           <div className="chartOption btnColor01" style={{ right:margin.RIGHT }} onClick={this.handleClickOption}><IoMdOptions size="22" /></div>
           { optionPanelOn && <div className="chartOptionPanel" style={{ width: 300 }}>{ this.renderOptionPanel() } </div> }
           { memoPanelOn &&
-            <div className="chartOptionPanel" style={{ width: 380, height: 270 }}>
+            <div className="chartOptionPanel" style={{ width: 380, height: 250 }}>
               <MemoPanel appData={appData} compCode={compCode} onApply={this.handleMemoPanel} />
             </div> 
           }

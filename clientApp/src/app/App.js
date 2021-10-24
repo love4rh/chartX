@@ -195,8 +195,8 @@ class App extends Component {
       { title: 'View a Company', viewID: 'year', style: 'outline-primary' },
       { title: 'View a Business', viewID: 'business', style: 'outline-info' },
       { title: 'Guess Buy/Sell Point', viewID: 'guessBP', style: 'outline-success' },
+      { title: 'Interests', viewID: 'interest', style: 'outline-danger' },
       { title: 'Recommend by 4PXX', viewID: '4pxx', style: 'outline-warning' },
-      { title: 'My Interests', viewID: 'interest', style: 'outline-danger' },
       { title: 'Sign Out', viewID: 'signin', style: 'outline-secondary' }
     ];
 

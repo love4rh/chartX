@@ -1,0 +1,176 @@
+@import "../view/theme.scss";
+
+
+.favoriteTable {
+  height: $bodyHeight;
+  background-color: $chartBGColor;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.favTitleBox {
+  position: relative;
+  margin-top: 20px;
+}
+
+.favTitleDate {
+  position: absolute;
+  top: 0px;
+  right: 5px;
+}
+
+.favDateSelector {
+  outline: none;
+}
+
+.favDataBody {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.favCompCard {
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  border: 1px solid #adb5bd;
+  margin: 5px;
+}
+
+.favCardHeader {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  border-bottom: 1px solid #adb5bd;
+  align-items: center;
+}
+
+.favHeaderNo {
+  flex-basis: 40px;
+  background-color: #343a40;
+  height: 100%;
+  color: whitesmoke;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.favHeaderName {
+  margin-left: 5px;
+  flex: 1 1;
+}
+
+.favHeaderAction {
+  position: relative;
+  // flex-basis: 110px;
+  text-align: center;
+}
+
+.favAction {
+  display: inline-flex;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: space-around;
+  margin-right: 5px;
+}
+
+.favNormalAction {
+  color: $basicColor;
+}
+
+.favDeleteAction {
+  color: $clrFontAlert;
+}
+
+.favAction:hover {
+  color: white;
+  background-color: $basicColor;
+  border-radius: 4px;
+}
+
+.favCardBody {
+
+}
+
+.favCardInfo {
+  padding: 5px;
+  display: flex;
+  flex-flow: row;
+  width: 100%;
+  background-color: whitesmoke;
+}
+
+.favDataName {
+  text-align: left;
+}
+
+.favDataValue {
+  flex: 1 1;
+  text-align: right;
+}
+
+.favCalendar {
+  display: inline-block;
+  position: relative;
+  top: -2px;
+  margin-left: 5px;
+}
+
+.favCalendarPopup {
+  position: relative;
+}
+
+.favCalOpener {
+  outline: none;
+  width: 110px;
+  border: 1px solid lightgray;
+  background-color: whitesmoke;
+  text-align: center;
+}
+
+.favCalendar:hover {
+  color: $basicColor;
+}
+
+.favCardComment {
+  padding: 5px;
+}
+
+.favCardCommentBody {
+	padding: 5px;
+  width:100%;
+  height: 120px;
+  overflow-x: hidden;
+  overflow-y: auto;
+	color: #212529;
+	border: 1px solid #adb5bd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.favCommentLine {
+  font-size: 0.9rem;
+}
+
+.favMemoPanel {
+  position: absolute;
+  top: 24px;
+  right: 5px;
+  background-color: $sideMenuBGColor;
+  color: $sideMenuFGColor;
+  overflow-x: hidden;
+  height: 285px;
+  padding: 5px;
+  z-index: 999;
+  border-radius: 5px;
+}
+
+.saturday { color: rgb(0, 0, 255) !important; }
+.sunday { color: rgb(255, 0, 0) !important; }
