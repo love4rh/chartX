@@ -4,6 +4,7 @@ import static com.tool4us.common.Util.UT;
 
 import java.util.Date;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import static com.tool4us.common.AccountManager.AM;
@@ -47,19 +48,49 @@ public class SetFavoriteHandler extends ApiHandler
         {
             String yyyymmdd = UsefulTool.ConvertDateToString(new Date(), "yyyyMMdd");
             
-            // 변경된 값을 추려서 같이 보냄
-            JSONObject priceObj = ChartTool.queryPrice( new String[] { compCode },
-                new String[] {
-                      compObj.has("start") ? compObj.getString("start") : compObj.getString("modified")
-                    , compObj.has("last") ? compObj.getString("last") : yyyymmdd
+            String startDate = compObj.has("start") ? compObj.getString("start") : compObj.getString("created");
+            String lastDate = compObj.has("last") ? compObj.getString("last") : yyyymmdd;
+            
+            JSONArray prList = ChartTool.getPriceFromExternal(compCode, startDate, lastDate);
+
+            int count = prList == null ? 0 : prList.length();
+
+            long prBasis = -1;
+            Date dtBasis = null;
+            JSONArray rList = new JSONArray();
+
+            for(int i = 1; i < count; ++i)
+            {
+                JSONArray rec = prList.getJSONArray(i);
+
+                long pr = rec.getLong(4);
+                lastDate = rec.getString(0);
+                Date dt = UsefulTool.ConvertStringToDate(lastDate, "yyyyMMdd");
+
+                if( i == 1 )
+                {
+                    prBasis = pr;
+                    startDate = lastDate;
+                    dtBasis = dt;
                 }
-            );
+
+                JSONObject item = new JSONObject();
+
+                item.put("price", pr);
+                item.put("dayDiff", Math.round( (dt.getTime() - dtBasis.getTime()) / 86400000 ) );
+                item.put("ratio", (double) (pr - prBasis) / (double) prBasis * 100.0 );
+
+                rList.put(item);
+            }
+            
+            if( prBasis > 0 )
+            {
+                compObj.put("stat", rList);
+            }
             
             JSONObject retObj = new JSONObject();
             
             retObj.put("favorite", compObj);
-            retObj.put("price", priceObj);
-            retObj.put("lastDate", yyyymmdd);
             
             return makeResponseJson(retObj);
         }

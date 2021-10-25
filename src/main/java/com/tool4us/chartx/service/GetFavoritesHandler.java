@@ -3,11 +3,11 @@ package com.tool4us.chartx.service;
 import static com.tool4us.common.Util.UT;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import static com.tool4us.common.AccountManager.AM;
@@ -45,54 +45,93 @@ public class GetFavoritesHandler extends ApiHandler
             return makeResponseJson("{}");
         }
 
-        List<String> codeList = new ArrayList<String>();
-        Set<String> dateSet = new TreeSet<String>();
-        
+        List<JSONObject> retList = new ArrayList<JSONObject>();
         JSONObject commentObj = new JSONObject();
-        
-        String yyyymmdd = UsefulTool.ConvertDateToString(new Date(), "yyyyMMdd");
-        
-        dateSet.add(yyyymmdd);
 
-        Set<String> codes = fav.keySet();
-        
-        for(String code : codes)
+        String yyyymmdd = UsefulTool.ConvertDateToString(new Date(), "yyyyMMdd");
+
+        for(String code : fav.keySet())
         {
-            codeList.add(code);
             JSONObject obj = fav.getJSONObject(code);
-            
-            if( obj.getBoolean("isSet") )
+
+            if( !obj.getBoolean("isSet") )
+                continue;
+
+            obj.put("code", code);
+
+            String startDate = obj.has("start") ? obj.getString("start") : obj.getString("created");
+            String lastDate = obj.has("last") ? obj.getString("last") : yyyymmdd;
+
+            if( !obj.has("stat") )
             {
-                if( obj.has("start" ))
-                    dateSet.add(obj.getString("start"));
-                else
-                    dateSet.add(obj.getString("modified"));
-                
-                if( obj.has("last") )
+                JSONArray prList = ChartTool.getPriceFromExternal(code, startDate, lastDate);
+
+                int count = prList == null ? 0 : prList.length();
+
+                long prBasis = -1;
+                Date dtBasis = null;
+                JSONArray rList = new JSONArray();
+
+                for(int i = 1; i < count; ++i)
                 {
-                    dateSet.add(obj.getString("last"));
+                    JSONArray rec = prList.getJSONArray(i);
+
+                    long pr = rec.getLong(4);
+                    lastDate = rec.getString(0);
+                    Date dt = UsefulTool.ConvertStringToDate(lastDate, "yyyyMMdd");
+
+                    if( i == 1 )
+                    {
+                        prBasis = pr;
+                        startDate = lastDate;
+                        dtBasis = dt;
+                    }
+
+                    JSONObject item = new JSONObject();
+
+                    item.put("price", pr);
+                    item.put("dayDiff", Math.round( (dt.getTime() - dtBasis.getTime()) / 86400000 ) );
+                    item.put("ratio", (double) (pr - prBasis) / (double) prBasis * 100.0 );
+
+                    rList.put(item);
+                }
+                
+                if( prBasis > 0 )
+                {
+                    obj.put("stat", rList);
                 }
             }
             
+            obj.put("start", startDate);
+            obj.put("last", lastDate);
+
             String comment = AM.getComments(id, code);
             if( comment != null ) {
                 commentObj.put(code, UT.encodeURIComponent(comment));
             }
+            
+            retList.add(obj);
         }
         
-        List<String> dateList = new ArrayList<String>();
-        for(String tmpStr : dateSet)
+        retList.sort(new Comparator<JSONObject>()
         {
-            dateList.add(tmpStr);
+            @Override
+            public int compare(JSONObject o1, JSONObject o2)
+            {
+                return o1.getString("start").compareTo( o2.getString("start") );
+            }
+        });
+        
+        JSONArray retAr = new JSONArray();
+        for(JSONObject tmpObj : retList)
+        {
+            retAr.put(tmpObj);
         }
-        
-        JSONObject priceObj = ChartTool.queryPrice(codeList, dateList);
-        
+
         JSONObject retObj = new JSONObject();
-        retObj.put("favorites", fav);
-        retObj.put("price", priceObj);
+
+        retObj.put("favorites", retAr);
         retObj.put("comment", commentObj);
-        retObj.put("lastDate", yyyymmdd);
 
         return makeResponseJson(retObj);
     }

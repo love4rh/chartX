@@ -96,7 +96,7 @@
 }
 
 .favCardBody {
-
+  outline: none;
 }
 
 .favCardInfo {
@@ -174,3 +174,8 @@
 
 .saturday { color: rgb(0, 0, 255) !important; }
 .sunday { color: rgb(255, 0, 0) !important; }
+
+.favRatioItem {
+  display: inline-block;
+  margin: auto 4px;
+}

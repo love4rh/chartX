@@ -170,7 +170,7 @@ const apiProxy = {
 		}).then(res => {
 			apiProxy.leaveWaiting();
 			const dt = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-			// console.log('CHECK - FAV', res);
+			console.log('CHECK - FAV', res);
 			if( dt.returnCode === 0 && isvalid(dt.response) ) {
 				if( cbOk ) cbOk(dt.response);
 			} else {

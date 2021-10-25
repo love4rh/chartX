@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import styled from 'styled-components';
 
-import { isvalid, istrue, makeid, numberWithCommas, yyymmddToHuman, dateToYYYYMMDD, getDayName } from '../grid/common.js';
+import { isvalid, isundef, makeid, numberWithCommas, yyymmddToHuman, dateToYYYYMMDD, getDayName } from '../grid/common.js';
 
 import { SiNaver } from 'react-icons/si';
 import { RiDeleteBin6Line, RiLineChartLine, RiEditBoxLine } from 'react-icons/ri';
@@ -34,6 +34,7 @@ class FavoriteCard extends Component {
     appData: PropTypes.object.isRequired,
     favData: PropTypes.object.isRequired,
     compCode: PropTypes.string.isRequired,
+    comment: PropTypes.string,
     cw: PropTypes.number,
     onEvent: PropTypes.func
   };
@@ -41,15 +42,14 @@ class FavoriteCard extends Component {
   constructor (props) {
     super(props);
 
-    const { index, cw, appData, favData, compCode } = this.props;
-    const { favorites, price, comment, lastDate } = favData;
+    const { index, cw, appData, favData, comment, compCode } = this.props;
 
-    const k = compCode;
-    const d = favorites[k];
-    const msg = comment && comment[k];
-    const detail = this.makeState(k, d, price, lastDate);
+    const d = favData;
+    const msg = comment;
+    const detail = this.makeState(d);
 
     this.state = {
+      favData,
       drawKey: makeid(6),
       index, appData, cw, compCode, msg,
       memoPanelOn: false,
@@ -68,21 +68,47 @@ class FavoriteCard extends Component {
     return null;
   }
 
-  makeState = (compCode, d, price, lastDate) => {
-    const d1 = d.start ? d.start : d.created;
-    const p1 = price[compCode + '@' + d1];
-    const d2 = d.last ? d.last : lastDate;
-    const p2 = price[compCode + '@' + d2];
-    const ratio = p1 && p2 ? Math.round((p2[1] - p1[1]) / p1[1] * 10000) / 100 : null;
+  makeState = (d) => {
+    // d has: start, last, 
+    const rl = d.stat;
+    const d1 = d.start;
+    const p1 = rl && rl[0] && rl[0].price;
+    const d2 = d.last;
+    const p2 = rl && rl[rl.length - 1] && rl[rl.length - 1].price;
     const dt1 = new Date(Date.parse(yyymmddToHuman(d1)));
     const dt2 = new Date(Date.parse(yyymmddToHuman(d2)));
-    const days = Math.round((dt2.getTime() - dt1.getTime()) / 86400000);
 
     return {
       dateStart: dt1,
       dateLast: dt2,
-      p1, p2, ratio, days
+      p1, p2
     };
+  }
+
+  makeRatioTag = () => {
+    const { favData } = this.state;
+
+    const rl = favData.stat;
+    if( isundef(rl) || rl.length === 0 ) {
+      return <div className="favRatioItem">{'-'}</div>
+    }
+
+    const tags = [];
+
+    for(let i = Math.max(1, rl.length - 5); i < rl.length; ++i) {
+      const it = rl[i];
+      const ratio = Math.round(it.ratio * 100) / 100;
+
+      tags.push(
+        <div key={`favratio-${i}`} className="favRatioItem">
+          { i < rl.length - 1
+            ? <><span style={{ color:`${ratio && ratio > 0 ? 'red' : 'blue'}`}}>{`${isvalid(ratio) ? ratio + ' %' : '-'}`}</span><span style={{ color:'black' }}> | </span></>
+            : <span style={{ color:`${ratio && ratio > 0 ? 'red' : 'blue'}`}}>{`${ratio ? ratio + ' %' : '-'} (${it.dayDiff}일)`}</span> }
+        </div>
+      );
+    }
+
+    return (<>{ tags.map(t => t) }</>);
   }
 
   handleMenuClick = (type) => () => {
@@ -110,15 +136,15 @@ class FavoriteCard extends Component {
     if( 'start' === type ) {
       appData.setFavorite(compCode, { start: dtStr }, (data) => {
         if( data.returnCode === 0 ) {
-          const { favorite, price, lastDate } = data.response;
-          this.setState( { dateStart: dt, ...this.makeState(compCode, favorite, price, lastDate ) } );
+          const { favorite } = data.response;
+          this.setState( { favData: favorite, dateStart: dt, ...this.makeState(favorite) } );
         }
       });
     } else if( 'end' === type ) {
       appData.setFavorite(compCode, { last: dtStr }, (data) => {
         if( data.returnCode === 0 ) {
-          const { favorite, price, lastDate } = data.response;
-          this.setState({ dateLast: dt, ...this.makeState(compCode, favorite, price, lastDate ) } );
+          const { favorite } = data.response;
+          this.setState({ favData: favorite, dateLast: dt, ...this.makeState(favorite) } );
         }
       });
     }
@@ -133,7 +159,7 @@ class FavoriteCard extends Component {
   }
 
   render() {
-    const { drawKey, index, appData, cw, compCode, msg, p1, p2, ratio, dateStart, dateLast, memoPanelOn, days } = this.state;
+    const { drawKey, index, appData, cw, compCode, msg, p1, p2, dateStart, dateLast, memoPanelOn } = this.state;
 
     const dateList = [
       { title: '시작일', date: dateStart, keyStr: 'start', bgColor: 'whitesmoke', pr: p1 },
@@ -175,13 +201,13 @@ class FavoriteCard extends Component {
                     dayClassName={dt => getDayName(dt) === '토' ? 'saturday' : getDayName(dt) === '일' ? 'sunday' : undefined }
                   />
                 </div>
-                <div className="favDataValue">{d.pr ? '₩ ' + numberWithCommas(d.pr[1]) : '-'}</div>
+                <div className="favDataValue">{d.pr ? '₩ ' + numberWithCommas(d.pr) : '-'}</div>
               </div>
             );
           })}
           <div className="favCardInfo">
             <div className="favDataName">{'증감비율'}</div>
-            <div className="favDataValue" style={{ color:`${ratio && ratio > 0 ? 'red' : 'blue'}`}}>{`${ratio ? ratio + ' %' : '-'} / ${days}일`}</div>
+            <div className="favDataValue">{ this.makeRatioTag() }</div>
           </div>
           <div key={`fav-cmt-${drawKey}`} className="favCardComment">
             <div className="favCardCommentBody">
@@ -250,9 +276,20 @@ class FavoriteTable extends Component {
   makeTable = (cw, drawKey, favList) => {
     const { appData } = this.props;
     const { data } = this.state;
+    const { comment } = data;
 
     return (favList &&
-      favList.map((k, i) => <FavoriteCard key={`favBox-${drawKey}-${k}`} index={i} appData={appData} compCode={k} favData={data} cw={cw} onEvent={this.onChildEvent} />)
+      favList.map((d, i) => (
+        <FavoriteCard key={`favBox-${drawKey}-${d.code}`}
+          index={i}
+          appData={appData}
+          compCode={d.code}
+          favData={d}
+          comment={comment && comment[d.code]}
+          cw={cw}
+          onEvent={this.onChildEvent}
+        />)
+      )
     );
   }
 
@@ -262,11 +299,11 @@ class FavoriteTable extends Component {
 
     const adjW = Math.min(clientWidth - 4, 1130);
 
-    const favList = favorites && Object.keys(favorites).filter(k => favorites[k] && istrue(favorites[k].isSet) && (selectedDate ==='All' || favorites[k].start === selectedDate));
-    const tmpList = favorites && Object.keys(favorites).filter(k => favorites[k] && istrue(favorites[k].isSet)).map(k => favorites[k].start);
+    const favList = favorites && favorites.filter(d => selectedDate ==='All' || d.start === selectedDate);
+    const tmpList = favorites && favorites.map(d => d.start);
     const dateSet = new Set(tmpList);
     const dateList = ['0', ...dateSet].sort();
-    
+
     dateList[0] = 'All';
 
     return (

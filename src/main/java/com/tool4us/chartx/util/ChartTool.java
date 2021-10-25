@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.tool4us.common.Logs;
+import com.tool4us.net.http.TomyHttpClient;
 
 import lib.turbok.common.ValueType;
 import lib.turbok.data.FileMapStore;
@@ -381,5 +382,31 @@ public class ChartTool
         }
         
         return obj;
+    }
+    
+    
+    public static JSONArray getPriceFromExternal(String compCode, String st, String ed)
+    {
+        String retText = null;
+        TomyHttpClient client = new TomyHttpClient();
+        
+        try
+        {
+            String url = "https://api.finance.naver.com/siseJson.naver?symbol=" + compCode
+                + "&requestType=1&startTime=" + st + "&endTime=" + ed + "&timeframe=day";
+
+            retText = client.responseText( client.GET(url) );
+        }
+        catch(Exception xe)
+        {
+            Logs.trace(xe);
+        }
+        finally
+        {
+            client.close();
+        }
+
+        return new JSONArray( retText == null ? "[]" : retText.replace('\'', '"') );
+        
     }
 }
