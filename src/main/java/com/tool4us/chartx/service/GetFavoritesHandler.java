@@ -62,7 +62,7 @@ public class GetFavoritesHandler extends ApiHandler
             String startDate = obj.has("start") ? obj.getString("start") : obj.getString("created");
             String lastDate = obj.has("last") ? obj.getString("last") : yyyymmdd;
 
-            if( !obj.has("stat") )
+            if( !obj.has("stat") || !obj.has("last") || yyyymmdd.equals(obj.getString("last")) )
             {
                 JSONArray prList = ChartTool.getPriceFromExternal(code, startDate, lastDate);
 
@@ -103,7 +103,6 @@ public class GetFavoritesHandler extends ApiHandler
             }
             
             obj.put("start", startDate);
-            obj.put("last", lastDate);
 
             String comment = AM.getComments(id, code);
             if( comment != null ) {

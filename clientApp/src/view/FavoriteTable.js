@@ -73,7 +73,7 @@ class FavoriteCard extends Component {
     const rl = d.stat;
     const d1 = d.start;
     const p1 = rl && rl[0] && rl[0].price;
-    const d2 = d.last;
+    const d2 = d.last ? d.last : dateToYYYYMMDD(new Date());
     const p2 = rl && rl[rl.length - 1] && rl[rl.length - 1].price;
     const dt1 = new Date(Date.parse(yyymmddToHuman(d1)));
     const dt2 = new Date(Date.parse(yyymmddToHuman(d2)));

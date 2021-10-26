@@ -17,9 +17,6 @@ import { MemoPanel } from './MemoPanel.js';
 import './styles.scss';
 
 
-const hideModeOn = false; // 차트 제목, 시리즈 이름 등을 가림
-const checkModeOn = false; // 첫 번째 시리즈를 가림
-
 
 /**
  * Run Chart
@@ -66,7 +63,7 @@ class RunTooltipChart extends Component {
     const yData = [];
     data.yData.map((dl, idx) => {
       dl.map(dd => {
-        yData.push({ ...dd, shown: (!checkModeOn || yData.length > 0), useY2: (idx > 0) }); // TODO yData.length > 0 --> true
+        yData.push({ ...dd, shown: (!appData.isCheckerMode() || yData.length > 0), useY2: (idx > 0) }); // TODO yData.length > 0 --> true
         return true;
       });
       return true;
@@ -688,7 +685,7 @@ class RunTooltipChart extends Component {
       <div className="chartMain">
         <div className="chartHeader">
           <div className="chartTitleDiv">
-            {hideModeOn ? 'title' : title}
+            { appData.isHideMode() ? 'title' : title }
             { favorite  && <div className="chartFavorite" onClick={this.handleTitleClick}><RiHeartFill size="22"/></div> }
             { !favorite && <div className="chartNoFavorite" onClick={this.handleTitleClick}><RiHeartLine size="22"/></div> }
           </div>
@@ -716,7 +713,7 @@ class RunTooltipChart extends Component {
                     { dd.shown ? <RiCheckboxLine size="18" /> : <RiCheckboxBlankLine size="18" /> }
                   </div>
                   <div className="legendTitle">
-                    { hideModeOn ? `Series-${idx}` : dd.title }
+                    { appData.isHideMode() ? `Series-${idx}` : dd.title }
                   </div>
                 </div>
               );

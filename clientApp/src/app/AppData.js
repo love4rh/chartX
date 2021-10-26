@@ -23,6 +23,16 @@ class AppData {
     // TODO unmount 시 해야 할 일들
   }
 
+  // 차트 제목, 시리즈 이름 등을 가림
+  isHideMode = () => {
+    return false;
+  }
+
+  // 첫 번째 시리즈를 가림
+  isCheckerMode = () => {
+    return true;
+  }
+
   gotoPage = (code) => {
     this._app.goTo('year')(code);
   }
@@ -73,6 +83,15 @@ class AppData {
   }
 
   getCodeTitle = (code) => {
+    if( this.isHideMode() ) {
+      for(let i = 0; i < this._codeList.length; ++i) {
+        if( this._codeList[i].code === code ) {
+          return 'title-' + (i + 1);
+        }
+      }
+      return 'unknown';
+    }
+
     const d = this.getCodeData(code);
     return isundef(d) ? '' : `${d.name} / ${d.code} / ${d.business}`;
   }
