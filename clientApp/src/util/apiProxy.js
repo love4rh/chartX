@@ -3,8 +3,8 @@ import axios from 'axios';
 import { makeid, istrue, isundef, tickCount, SHA256, isvalid } from '../util/tool.js';
 
 // export const _serverBaseUrl_ = 'http://10.186.115.136:8080';
-// export const _serverBaseUrl_ = 'https://gx.tool4.us';
-export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
+export const _serverBaseUrl_ = 'https://gx.tool4.us';
+// export const _serverBaseUrl_ = 'http://127.0.0.1:8080';
 
 const _userToken = makeid(8);
 
@@ -170,7 +170,7 @@ const apiProxy = {
 		}).then(res => {
 			apiProxy.leaveWaiting();
 			const dt = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-			console.log('CHECK - FAV', res);
+			// console.log('CHECK - FAV', res);
 			if( dt.returnCode === 0 && isvalid(dt.response) ) {
 				if( cbOk ) cbOk(dt.response);
 			} else {

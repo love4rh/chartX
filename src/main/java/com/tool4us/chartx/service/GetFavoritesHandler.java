@@ -104,9 +104,9 @@ public class GetFavoritesHandler extends ApiHandler
             
             obj.put("start", startDate);
 
-            String comment = AM.getComments(id, code);
-            if( comment != null ) {
-                commentObj.put(code, UT.encodeURIComponent(comment));
+            String encComment = AM.getCommentsEncoded(id, code);
+            if( encComment != null ) {
+                commentObj.put(code, encComment);
             }
             
             retList.add(obj);

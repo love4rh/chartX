@@ -299,7 +299,16 @@ public enum AccountManager
         if( values.has(keys[0]) && !values.getBoolean(keys[0]) )
         {
             // 히스토리에 현재 Favorite 상태를 넣고 여기서는 삭제합시다.
-            pushFavoriteToHistory(accObj, compCode, compObj);
+            JSONObject backObj = new JSONObject(compObj.toString());
+            String msg = this.getCommentsEncoded(id, compCode);
+
+            if( msg != null )
+                backObj.put("comment", msg);
+            
+            if( !backObj.has("last") )
+                backObj.put("last", ymd);
+
+            pushFavoriteToHistory(accObj, compCode, backObj);
             favorites.remove(compCode);
         }
         else
@@ -309,8 +318,13 @@ public enum AccountManager
                 if( values.has(kn) )
                     compObj.put(kn, values.get(kn));
             }
+            
+            if( compObj.has("last") && ymd.equals(compObj.getString("last")) )
+            {
+                compObj.remove("last"); // 최신일로 지정하기 위하여 제거
+            }
         }
-        
+
         _accountModified.put(id, true);
         
         return compObj;
@@ -326,6 +340,7 @@ public enum AccountManager
         return obj.getJSONObject(keyName);
     }
     
+    // compObj: 딥카피된 객체임
     private void pushFavoriteToHistory(JSONObject accObj, String compCode, JSONObject compObj)
     {
         final String keyName = "favHistory";
@@ -353,10 +368,11 @@ public enum AccountManager
             history.put(compCode, compHistory);
         }
 
-        compHistory.put( new JSONObject(compObj.toString()) ); // 복사해서 넣기
+        compHistory.put( compObj );
     }
     
-    public String getComments(String id, String pCode)
+    // Encoded되어 저장된 Comment를 그대로 반환함
+    public String getCommentsEncoded(String id, String pCode)
     {
         final String keyName = "comments";
         JSONObject obj = getAcccountData(id);
@@ -369,7 +385,17 @@ public enum AccountManager
         if( !cmtObj.has(pCode) )
             return null;
         
-        return UT.decodeURIComponent(cmtObj.getString(pCode));
+        return cmtObj.getString(pCode);
+    }
+    
+    public String getComments(String id, String pCode)
+    {
+        String msg = getCommentsEncoded(id, pCode);
+
+        if( msg == null )
+            return null;
+        
+        return UT.decodeURIComponent(msg);
     }
     
     public void removeComments(String id, String pCode)

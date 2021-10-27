@@ -27,10 +27,10 @@ public class GetCommentHandler extends ApiHandler
         if( emptyCheck(pCode, uid) )
         	return makeResponseJson(ApiError.MissingParameter);
         
-        String comment = AM.getComments(uid, pCode);
+        String comment = AM.getCommentsEncoded(uid, pCode);
 
         StringBuilder sb = new StringBuilder();        
-        sb.append("{\"comment\":\"").append(comment == null ? "" : UT.encodeURIComponent(comment)).append("\"}");
+        sb.append("{\"comment\":\"").append(comment == null ? "" : comment).append("\"}");
 
         return makeResponseJson(sb.toString());
     }
