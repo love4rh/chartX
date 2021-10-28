@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { isundef, isvalid, tickCount } from '../util/tool.js';
+import { isundef, isvalid, tickCount, setGlobalMessageHandle } from '../util/tool.js';
 
 import { apiProxy } from '../util/apiProxy.js';
 
@@ -12,9 +12,14 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 
 import Spinner from 'react-bootstrap/Spinner'
+import Toast from 'react-bootstrap/Toast'
 
 import { AppData } from '../app/AppData.js';
-import { MainFrame } from '../view/MainFrame.js';
+import { LogicResultView } from '../view/LogicResultView.js';
+import { CompanyChartView } from '../view/CompanyChartView.js';
+import { GuessBPView } from '../view/GuessBPView.js';
+import { BusinessChartView } from '../view/BusinessChartView.js';
+import { InterestingsView } from '../view/InterestingsView.js';
 
 import './App.scss';
 
@@ -32,10 +37,19 @@ class App extends Component {
 
     // console.log('App URL', url, urlComp);
 
+    this.menu = [
+      { title: 'View a Company', viewID: 'year', style: 'outline-primary' },
+      { title: 'View a Business', viewID: 'business', style: 'outline-info' },
+      { title: 'Guess Buy/Sell Point', viewID: 'guessBP', style: 'outline-success' },
+      { title: 'Interests', viewID: 'interest', style: 'outline-danger' },
+      { title: 'Recommend by 4PXX', viewID: '4pxx', style: 'outline-warning' },
+      { title: 'Sign Out', viewID: 'signin', style: 'outline-secondary' }
+    ];
+
     const tmpStr = localStorage.getItem(_sessionKey_);
 
     let lastID = null;
-    let code = null;
+    let code = '066570';
     const appData = new AppData(this);
 
     if( isvalid(tmpStr) ) {
@@ -50,6 +64,10 @@ class App extends Component {
       if( 'year' === urlComp[0] ) {
         viewType = 'year';
         code = isundef(urlComp[1]) ? '066570' : urlComp[1];
+      } else if( 'gbp' === urlComp[0] ) {
+        viewType = 'guessBP';
+      } else if( 'fav' === urlComp[0] ) {
+        viewType = 'interest';
       } else {
         viewType = 'choice';
       }
@@ -61,6 +79,7 @@ class App extends Component {
     this.state = {
       appData,
       processing: false,
+      message: null,
       appTitle: 'GX',
       inputValue: { identifier: '', password: '' },
       userID: lastID,
@@ -74,7 +93,7 @@ class App extends Component {
   componentDidMount () {
     document.title = this.state.appTitle;
 
-    // setGlobalMessageHandle(this.showInstanceMessage);
+    setGlobalMessageHandle(this.showInstanceMessage);
     window.addEventListener('beforeunload', this.handleUnload);
     apiProxy.setWaitHandle(this.enterWaiting, this.leaveWaiting);
   }
@@ -109,6 +128,16 @@ class App extends Component {
   leaveWaiting = () => {
     this.setState({ processing: false });
   }
+
+  showInstanceMessage = (msg) => {
+    // console.log('showInstanceMessage', msg);
+    this.setState({ processing: false, message: msg });
+  }
+
+  hideToastShow = () => {
+    this.setState({ message: null });
+  }
+
 
   procSignIn = (uid, data) => {
     const { appData } = this.state;
@@ -191,14 +220,6 @@ class App extends Component {
 
   renderChoice = () => {
     const { appTitle, message } = this.state;
-    const menu = [
-      { title: 'View a Company', viewID: 'year', style: 'outline-primary' },
-      { title: 'View a Business', viewID: 'business', style: 'outline-info' },
-      { title: 'Guess Buy/Sell Point', viewID: 'guessBP', style: 'outline-success' },
-      { title: 'Interests', viewID: 'interest', style: 'outline-danger' },
-      { title: 'Recommend by 4PXX', viewID: '4pxx', style: 'outline-warning' },
-      { title: 'Sign Out', viewID: 'signin', style: 'outline-secondary' }
-    ];
 
     return (
       <Container>
@@ -206,7 +227,7 @@ class App extends Component {
           <Col md="4">
             <h2>{appTitle}</h2>
             <div className="titleMargin" />
-            { menu.map((m, i) => {
+            { this.menu.map((m, i) => {
               return (
                 <div key={`choice-${i}`} className="d-grid gap-2 menuButton">
                   <Button variant={m.style} onClick={this.goTo(m.viewID)}>{m.title}</Button>
@@ -225,28 +246,61 @@ class App extends Component {
     
     // TODO 로그인 상태 체크
 
-    if( 'signin' === viewType) {
-      return this.renderLogInView();
-    } else if( 'choice' === viewType ) {
-      return this.renderChoice();
+    let rptView = null;
+
+    switch( viewType ) {
+      case 'choice':
+        rptView = this.renderChoice();
+        break;
+
+      case 'guessBP':
+        rptView = ( <GuessBPView appTitle={appTitle} appData={appData} goBack={this.goTo('choice')} /> );
+        break;
+
+      case 'year':
+        rptView = ( <CompanyChartView appTitle={appTitle} appData={appData} goBack={this.goTo('choice')} compCode={code} /> );
+        break;
+
+      case 'business':
+        rptView = ( <BusinessChartView appTitle={appTitle} appData={appData} goBack={this.goTo('choice')} /> );
+        break;
+
+      case 'interest':
+        rptView = ( <InterestingsView appTitle={appTitle} appData={appData} goBack={this.goTo('choice')} /> );
+        break;
+
+      case '4pxx':
+        rptView = ( <LogicResultView appTitle={appTitle} appData={appData} goBack={this.goTo('choice')} /> );
+        break;
+
+      case 'signin':
+      default:
+        rptView = this.renderLogInView();
+        break;
     }
 
-    return (
-      <MainFrame key={`main-view-${viewType}`}
-        appTitle={appTitle} appData={appData}
-        pageType={viewType} compCode={code}
-        goBack={this.goTo('choice')}
-      />
-    );
+    return rptView;
   }
 
   render () {
-    const { viewType, processing } = this.state;
+    const { viewType, processing, message } = this.state;
+    const toastOn = isvalid(message);
 
     return (
       <div className="App">
         { this.renderByType(viewType) }
         { processing && <div className="blockedLayer"><Spinner className="spinnerBox" animation="border" variant="secondary" /></div> }
+
+        { toastOn &&
+          <div className="blockedLayer" onClick={this.hideToastShow}>
+            <Toast className="toastBox" onClose={this.hideToastShow} show={toastOn} delay={3000} autohide animation>
+              <Toast.Header>
+                <strong className="mr-auto">Message</strong>
+              </Toast.Header>
+              <Toast.Body>{message}</Toast.Body>
+            </Toast>
+          </div>
+        }
       </div>
     );
   }

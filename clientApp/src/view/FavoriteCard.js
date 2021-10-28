@@ -13,7 +13,7 @@ import { MemoPanel } from '../chart/MemoPanel.js';
 import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/esm/locale';
 
-import './FavoriteTable.scss'
+import './FavoriteCard.scss'
 import 'react-datepicker/dist/react-datepicker.css';
 
 
@@ -120,7 +120,6 @@ class FavoriteCard extends Component {
     if( 'naver' === type ) {
       window.open(`https://finance.naver.com/item/main.naver?code=${compCode}`, '_blank');
     } else if( 'jump' === type ) {
-      // appData.gotoPage(compCode);
       const url = window.location.href;
       const pRoot = url.indexOf('/', 10);
       window.open(url.substring(0, pRoot) + '/year/' + compCode, '_blank');
@@ -203,7 +202,7 @@ class FavoriteCard extends Component {
                     dayClassName={dt => getDayName(dt) === '토' ? 'saturday' : getDayName(dt) === '일' ? 'sunday' : undefined }
                   />
                 </div>
-                { dayDiff && i === 1 && <div className="favDayDiff">{`${dayDiff}일`}</div> }
+                { dayDiff && dayDiff > 0 && i === 1 ? <div className="favDayDiff">{`${dayDiff}일`}</div> : null }
                 <div className="favDataValue">{d.pr ? '₩ ' + numberWithCommas(d.pr) : '-'}</div>
               </div>
             );
@@ -223,120 +222,5 @@ class FavoriteCard extends Component {
   }
 };
 
-
-class FavoriteTable extends Component {
-  static propTypes = {
-    appData: PropTypes.object.isRequired,
-    favData: PropTypes.object,
-  };
-
-  constructor (props) {
-    super(props);
-
-    const { appData, favData } = this.props;
-
-    this.state = {
-      appData,
-      drawKey: makeid(6),
-      clientWidth: 800,
-      clientHeight: 400,
-      data: favData,
-      selectedDate: 'All',
-    };
-
-    this._mainDiv = React.createRef();
-  }
-
-  componentDidMount() {
-    this.onResize();
-    window.addEventListener('resize', this.onResize);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.onResize);
-  }
-
-  onResize = () => {
-    const { clientWidth, clientHeight } = this._mainDiv.current;
-    this.setState({ clientWidth, clientHeight });
-  }
-
-  onChildEvent = (compCode, type, param) => {
-    const { appData } = this.props;
-    const { favorites } = this.state.data;
-
-    if( 'delete' === type ) {
-      for(let i = 0; i < favorites.length; ++i) {
-        if( favorites[i].code === compCode ) {
-          favorites[i].isSet = false;
-          break;
-        }
-      }
-      appData.setFavorite(compCode, { isSet: false });
-      this.setState({ drawKey: makeid(6) });
-    }
-  }
-
-  handleDateChanged = (ev) => {
-    this.setState({ selectedDate: ev.target.value });
-  }
-
-  makeTable = (cw, drawKey, favList) => {
-    const { appData } = this.props;
-    const { data } = this.state;
-    const { comment } = data;
-
-    return (favList &&
-      favList.map((d, i) => (
-        <FavoriteCard key={`favBox-${drawKey}-${d.code}`}
-          index={i}
-          appData={appData}
-          compCode={d.code}
-          favData={d}
-          comment={comment && comment[d.code]}
-          cw={cw}
-          onEvent={this.onChildEvent}
-        />)
-      )
-    );
-  }
-
-  render() {
-    const { drawKey, data, clientWidth, selectedDate } = this.state;
-    const { favorites } = data;
-
-    const adjW = Math.min(clientWidth - 4, 1130);
-
-    const favList = favorites && favorites.filter(d => d.isSet && (selectedDate ==='All' || d.start === selectedDate));
-    const tmpList = favorites && favorites.map(d => d.start);
-    const dateSet = new Set(tmpList);
-    const dateList = ['0', ...dateSet].sort();
-
-    dateList[0] = 'All';
-
-    return (
-      <div ref={this._mainDiv} className="favoriteTable">
-        <div className="favTitleBox">
-          <h4 style={{ width:`${adjW - 20}px`}}>{'Interests'}</h4>
-          <div className="favTitleDate">
-            <select className="favDateSelector" name="dateSelector" onChange={this.handleDateChanged} value={selectedDate}>
-              { dateList.map((d, i) => {
-                const dtStr = i === 0 ? d : yyymmddToHuman(d);
-                if( dtStr === '-' ) {
-                  return null;
-                }
-                return (<option key={`dt-sel-${i}`} value={d}>{dtStr}</option>);
-              })}
-            </select>
-          </div>
-        </div>
-        <div className="favDataBody" style={{ width:`${adjW - 20}px`}}>
-          { this.makeTable(Math.max(400, adjW / 2 - 20), drawKey, favList) }
-        </div>
-      </div>
-    );
-  }
-}
-
-export default FavoriteTable;
-export { FavoriteTable };
+export default FavoriteCard;
+export { FavoriteCard };

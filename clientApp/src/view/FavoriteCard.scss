@@ -1,37 +1,6 @@
 @import "../view/theme.scss";
 
 
-.favoriteTable {
-  height: $bodyHeight;
-  background-color: $chartBGColor;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.favTitleBox {
-  position: relative;
-  margin-top: 20px;
-}
-
-.favTitleDate {
-  position: absolute;
-  top: 0px;
-  right: 5px;
-}
-
-.favDateSelector {
-  outline: none;
-}
-
-.favDataBody {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
 .favCompCard {
   border-radius: 4px;
   display: flex;

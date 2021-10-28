@@ -30,7 +30,7 @@ class AppData {
 
   // 첫 번째 시리즈를 가림
   isCheckerMode = () => {
-    return true;
+    return false;
   }
 
   gotoPage = (code) => {

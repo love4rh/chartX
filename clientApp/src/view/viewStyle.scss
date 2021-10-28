@@ -248,3 +248,65 @@
 .searchBarItem:hover {
 	background-color: lightgrey;
 }
+
+.favTableBox {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+.favDataBody {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.favDateBox {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 3px;
+	box-sizing: border-box;
+	cursor: pointer;
+	width: 100px;
+	height: 44px;
+	border: 1px solid lightgrey;
+}
+
+.favDateSelector {
+	outline: none;
+	display: block;
+	width: 100%;
+	padding: .375rem .75rem;
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1.5rem;
+	color: #212529;
+	background-clip: padding-box;
+	border: none;
+}
+
+.favDateListBox {
+	position: absolute;
+	top: 46px;
+	width: 100px;
+	max-height: 400px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	background-color: white;
+	border: 1px solid lightgrey;
+	border-radius: 0 0 6px 6px;
+	z-index: 999;
+}
+
+.favDateListItem {
+	padding: 4px 12px;
+	height: 36px;
+	color: #212529;
+	line-height: 28px;
+	cursor: pointer;
+}
+
+.favDateListItem:hover {
+	background-color: lightgrey;
+}

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { isundef, makeid } from '../util/tool.js';
 
-import './MainFrame.scss';
+import './viewStyle.scss';
 
 
 

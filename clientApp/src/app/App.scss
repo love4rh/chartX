@@ -39,3 +39,10 @@
 	left: calc(50% - 14px);
 	top: calc(50% - 14px);
 }
+
+.toastBox {
+	min-width: 300px;
+	position: absolute;
+  top: 0;
+  right: 0;
+}
